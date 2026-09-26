@@ -144,6 +144,8 @@ main{padding:16px 14px}
 .p2 .blk{height:70px;background:#AFC3D2;border-bottom:5px solid #869DB0}
 .p3 .blk{height:54px;background:#E39A6B;border-bottom:5px solid #B8703F}
 .grid{padding:6px}
+.mini-rank{width:100%;text-align:left;display:block}
+.panel p a{color:var(--oceano);font-weight:800;word-break:break-all;text-decoration:underline}
 .row{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 4px;border-radius:16px}
 .row+.row{border-top:2px dashed var(--laguna2);border-radius:0}
 .row .pos{font-family:var(--disp);font-size:20px;width:40px;text-align:center;color:var(--muted)}
@@ -278,16 +280,31 @@ details.lvl[open] summary{margin-bottom:10px}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 
 /* ---------- academia ---------- */
-.ac-hero{display:flex;gap:12px;align-items:center;background:#F4EEFF;border:2px solid #E2D6FF;border-bottom-width:5px;border-radius:22px;padding:12px 14px;margin-bottom:12px}
-.ac-hero svg{width:84px;height:70px;flex:none}
-.ac-chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
-.ac-chips::-webkit-scrollbar{display:none}
-.ac-chips button{flex:none;padding:8px 13px;border-radius:999px;background:#fff;border:2px solid var(--linea);font-weight:900;font-size:14px;white-space:nowrap}
+.sheet.acad{max-width:900px}
+@media(min-width:700px){.sheet.acad{max-height:94%}}
+.ac-hero{display:flex;gap:12px;align-items:center;background:#F4EEFF;border:2px solid #E2D6FF;border-bottom-width:5px;border-radius:22px;padding:14px 16px;margin-bottom:14px}
+.ac-hero svg{width:92px;height:76px;flex:none}
+.ac-hero b.disp{font-size:22px}
+.ac-chips{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 12px}
+.ac-chips button{flex:none;padding:9px 14px;border-radius:999px;background:#fff;border:2px solid var(--linea);font-weight:900;font-size:14px;white-space:nowrap;position:relative}
 .ac-chips button.on{background:var(--uva);border-color:var(--uva);color:#fff}
-.ac-card{background:#fff;border:2px solid var(--linea);border-radius:18px;padding:12px 14px;margin-bottom:10px}
-.ac-card b{display:block;margin-bottom:2px}
+.ac-chips button.has::before{content:'';position:absolute;top:5px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--alga);box-shadow:0 0 0 2px #fff}
+.ac-chips button .cnt{display:inline-block;margin-left:4px;background:#fff;color:var(--uva);border-radius:999px;padding:0 6px;font-size:12px}
+.ac-card{background:#fff;border:2px solid var(--linea);border-radius:18px;padding:14px 16px;margin-bottom:10px;font-size:16px;line-height:1.5}
+.ac-card b{display:block;margin-bottom:3px;font-size:17px}
 .ac-src{font-size:13px;color:var(--uva);font-weight:800;margin-bottom:10px}
-.ac-intro{margin-bottom:12px}
+.ac-intro{margin-bottom:14px;font-size:16px}
+.ac-steps{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.ac-step{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--linea);border-bottom-width:4px;border-radius:16px;padding:12px 14px;text-align:left;width:100%}
+.ac-step .asi{font-size:26px;flex:none}
+.ac-step div{flex:1;min-width:0}
+.ac-step b{display:block;font-size:15px}
+.ac-step span{font-size:13px;color:var(--uva);font-weight:800}
+.ac-step .asa{font-size:22px;color:var(--linea);flex:none}
+.note-cta{width:100%;text-align:left;background:#F4EEFF;border-color:#E2D6FF;font-weight:900;color:var(--uva-d);font-size:15px}
+.ac-note{background:#F4EEFF;border:2px solid #E2D6FF;border-radius:18px;padding:14px 16px;margin:16px 0 8px}
+.ac-note label{display:block;font-weight:900;margin-bottom:4px}
+.ac-note textarea{min-height:96px}
 .book{display:flex;gap:12px}
 .book .cv{width:44px;height:62px;border-radius:4px 8px 8px 4px;flex:none;display:grid;place-items:center;font-size:22px;border-left:5px solid rgba(0,0,0,.18)}
 .menu{position:fixed;z-index:70;top:calc(62px + env(safe-area-inset-top,0px));right:max(12px,calc(50% - 298px));background:#fff;border:2px solid var(--linea);border-bottom-width:5px;border-radius:18px;padding:6px;min-width:210px;animation:up .15s}
@@ -394,6 +411,8 @@ button.brand{text-align:left;position:relative;padding:2px 0}
 .kpis div{background:#fff;border-radius:14px;padding:8px 4px;text-align:center;font-size:12px;font-weight:800;color:var(--muted)}
 .kpis b{display:block;font-family:var(--disp);font-weight:400;font-size:24px;color:var(--abismo)}
 .panel.nuevos{border-color:var(--coral);background:#FFF6F3}
+.panel.danger{border-color:#E3413D;background:#FFF3F2}
+.panel.danger2{background:#FFF3F2;border:2px solid #E3413D;border-bottom-width:5px;border-radius:18px;padding:14px 16px;font-size:15px;line-height:1.5}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -776,18 +795,27 @@ function renderRegister() {
 function openPin(id) {
   PILOT = id; PIN = ''; var m = mem(id);
   sheet('Hola, ' + esc(m.nombre), '<div style="text-align:center"><div style="width:130px;margin:0 auto">' + avatarSVG(m.avatar, id) + '</div><p class="muted">Ingresa tu PIN</p><div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>' +
-    '<div class="pad">' + [1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map(function (k) { return k === '' ? '<span></span>' : '<button data-a="key" data-k="' + k + '">' + k + '</button>'; }).join('') + '</div></div>');
+    '<div class="pad">' + [1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map(function (k) { return k === '' ? '<span></span>' : '<button data-a="key" data-k="' + k + '">' + k + '</button>'; }).join('') + '</div>' +
+    '<button class="btn coral block" id="pinGo" data-a="pinGo" disabled style="margin-top:16px">Ingresar 🏁</button></div>');
 }
 function pinKey(k) {
   if (k === '⌫') PIN = PIN.slice(0, -1); else if (PIN.length < 4) PIN += k;
   document.querySelectorAll('#dots i').forEach(function (d, i) { d.className = i < PIN.length ? 'f' : ''; });
-  if (PIN.length === 4) {
-    SES = { memberId: PILOT, pin: PIN };
-    api('state').then(function (r) {
-      if (r.ok) { LS.set(SES_KEY, SES); setState(r); closeSheet(); afterLogin(true); }
-      else { SES = null; PIN = ''; var d = document.getElementById('dots'); if (d) { d.classList.add('bad'); d.querySelectorAll('i').forEach(function (x) { x.className = ''; }); setTimeout(function () { d.classList.remove('bad'); }, 400); } toast('PIN incorrecto', true); }
-    });
-  }
+  var g = document.getElementById('pinGo'); if (g) g.disabled = PIN.length !== 4;
+  if (PIN.length === 4) pinSubmit();
+}
+function pinSubmit() {
+  if (PIN.length !== 4) return;
+  var g = document.getElementById('pinGo'); busy(g, true);
+  SES = { memberId: PILOT, pin: PIN };
+  api('state').then(function (r) {
+    if (r.ok) { LS.set(SES_KEY, SES); setState(r); closeSheet(); afterLogin(true); }
+    else {
+      busy(g, false); SES = null; PIN = ''; var g2 = document.getElementById('pinGo'); if (g2) g2.disabled = true;
+      var d = document.getElementById('dots'); if (d) { d.classList.add('bad'); d.querySelectorAll('i').forEach(function (x) { x.className = ''; }); setTimeout(function () { d.classList.remove('bad'); }, 400); }
+      toast('PIN incorrecto', true);
+    }
+  });
 }
 
 // ===================== RENDER PRINCIPAL =====================
@@ -836,6 +864,18 @@ function teamHTML(i, big) {
   }).join('') + '<span class="tn">' + (ms.length === 1 ? esc(mem(i.autorId).nombre) : 'Equipo de ' + esc(mem(i.autorId).nombre) + ' · ' + ms.length + ' integrantes') + '</span></div>';
 }
 
+// ---------- mini ranking, para animar en la pestaña Idear ----------
+function miniRanking() {
+  var b = S.board.filter(function (x) { return x.total > 0 || x.season > 0; }).slice(0, 3);
+  if (!b.length) return '';
+  var MED = ['🥇', '🥈', '🥉'];
+  return '<div class="sec-t"><h3>🐟 Ranking de tiburones</h3><span class="muted small">Ver todo en Torneo</span></div>' +
+    '<button class="panel grid mini-rank" data-a="tab" data-t="carrera">' + b.map(function (x, k) {
+      var r = rango(x.total);
+      return '<div class="row"><span class="pos">' + MED[k] + '</span>' + av(x.id) + '<div class="who"><b>' + esc(mem(x.id).nombre) + '</b><span class="muted small">' + r.ico + ' ' + r.nom + '</span></div><div class="pts">' + x.total + '<small>pts</small></div></div>';
+    }).join('') + '</button>';
+}
+
 // ---------- pestaña Idear ----------
 function solicitudesHTML(i) {
   if (!i.soyFundador || !i.solicitudes.length) return '';
@@ -851,7 +891,7 @@ function tabIdear() {
     if (eq && eq.sinResponder) tasks += '<div class="panel task"><div class="t-ico" style="background:#FFE1DB">❓</div><div class="t-txt"><b>' + eq.sinResponder + (eq.sinResponder === 1 ? ' pregunta' : ' preguntas') + ' para tu equipo</b><span class="muted small">Cualquier integrante puede responder.</span></div><button class="btn sm coral" data-a="idea" data-id="' + eq.id + '">Responder</button></div>';
     var pc = pending().length;
     if (pc) tasks += '<div class="panel task"><div class="t-ico" style="background:#FFF3CF">⭐</div><div class="t-txt"><b>' + pc + (pc === 1 ? ' idea espera' : ' ideas esperan') + ' tus estrellas</b><span class="muted small">Cada evaluación suma ' + S.puntosRegla.voto + ' puntos.</span></div><button class="btn sm sol" data-a="tab" data-t="evaluar">Evaluar</button></div>';
-    return h + (tasks ? '<div class="sec-t"><h3>Mientras tanto</h3></div>' + tasks : '') + '<button class="btn ghost block" data-a="rules" style="margin-top:14px">¿Cómo se juega?</button>';
+    return h + (tasks ? '<div class="sec-t"><h3>Mientras tanto</h3></div>' + tasks : '') + '<button class="btn ghost block" data-a="rules" style="margin-top:14px">¿Cómo se juega?</button>' + miniRanking();
   }
   if (s.nivel === 1) {
     if (S.me.puedeLanzar) {
@@ -881,7 +921,7 @@ function tabIdear() {
         }).join('');
     }
   }
-  return h + '<button class="btn ghost block" data-a="rules" style="margin-top:14px">¿Cómo se juega?</button>';
+  return h + '<button class="btn ghost block" data-a="rules" style="margin-top:14px">¿Cómo se juega?</button>' + miniRanking();
 }
 
 // ---------- pestaña Evaluar ----------
@@ -1259,23 +1299,60 @@ function openRules() {
 }
 
 // ===================== ACADEMIA BEBÉ TIBURÓN =====================
+// El cuaderno vive en este navegador, por piloto. Se llena a medida que se recorre cada sección.
+function notesKey() { return 'tec_notes_' + (S && S.me ? S.me.id : 'x'); }
+function notesGet() { return LS.get(notesKey(), {}); }
+function noteOf(id) { return (notesGet()[id] || '').trim(); }
+function notesSet(id, text) { var n = notesGet(); if (text && text.trim()) n[id] = text; else delete n[id]; LS.set(notesKey(), n); }
+function notesCount() { return Object.keys(notesGet()).length; }
+function acSteps() {
+  return [
+    ['💡', '¿No tienes ninguna idea todavía?', 'Empieza por Encontrar ideas', 'buscar'],
+    ['🧩', '¿Ya tienes una y quieres mejorarla?', 'Prueba SCAMPER o Océano azul', 'scamper'],
+    ['🗣️', '¿Vas a subir tu idea a Semilla?', 'Antes, lee Preguntar sin que te mientan', 'mom'],
+    ['⚠️', 'Antes de lanzarla', 'Revisa los Errores de novato', 'errores']
+  ];
+}
 function openAcademia() {
-  var chips = [['hoy', '🎯 Hoy']].concat(ACADEMIA.map(function (s) { return [s.id, s.ico + ' ' + s.t]; })).concat([['libros', '📚 Libros']]);
+  var chips = [['hoy', '🎯 Hoy']].concat(ACADEMIA.map(function (s) { return [s.id, s.ico + ' ' + s.t]; })).concat([['cuaderno', '📓 Mi cuaderno'], ['libros', '📚 Libros']]);
   var body = '';
   if (AC_TAB === 'hoy') {
     body = '<div class="panel qday"><span class="muted small">Pregunta para despertar ideas</span><p class="q" id="acQ">' + esc(PREGUNTAS_DIA[Math.floor(Date.now() / 86400000) % PREGUNTAS_DIA.length]) + '</p><button class="btn sm ghost" data-a="acOtra">Otra pregunta</button></div>' +
-      '<div class="ac-card"><b>¿Por dónde empiezo?</b>Si no tienes ninguna idea, parte por <b>Encontrar ideas</b>. Si ya tienes una y quieres mejorarla, prueba <b>SCAMPER</b> o <b>Océano azul</b>. Antes de subir a Semilla, lee <b>Preguntar sin que te mientan</b>. Y siempre revisa los <b>Errores de novato</b>.</div>';
+      '<div class="sec-t" style="margin-top:4px"><h3>¿Por dónde empiezo?</h3></div><div class="ac-steps">' +
+      acSteps().map(function (st) { return '<button class="ac-step" data-a="acTab" data-t="' + st[3] + '"><span class="asi">' + st[0] + '</span><div><b>' + esc(st[1]) + '</b><span>' + esc(st[2]) + '</span></div><span class="asa">›</span></button>'; }).join('') + '</div>' +
+      (notesCount() ? '<button class="panel note-cta" data-a="acTab" data-t="cuaderno">📓 Tienes ' + notesCount() + (notesCount() === 1 ? ' nota guardada' : ' notas guardadas') + ' · ver mi cuaderno</button>' : '');
   } else if (AC_TAB === 'libros') {
     body = '<p class="ac-intro">Los libros que más usan emprendedores, incubadoras y jurados. Todos existen en español.</p>' +
       LIBROS.map(function (l) { return '<div class="ac-card book"><div class="cv" style="background:' + l.c + '">' + l.i + '</div><div><b>' + esc(l.t) + '</b><span class="muted small">' + esc(l.a) + '</span><div style="margin-top:4px">' + esc(l.d) + '</div></div></div>'; }).join('');
+  } else if (AC_TAB === 'cuaderno') {
+    var notas = notesGet(), secs = ACADEMIA.filter(function (x) { return noteOf(x.id); });
+    if (!secs.length) {
+      body = '<div class="panel empty"><div class="e-ico">📓</div><b>Tu cuaderno está vacío</b><p>Recorre una sección (por ejemplo, Encontrar ideas) y escribe tus notas al final. Se van guardando solas aquí.</p><button class="btn coral" data-a="acTab" data-t="buscar">🔍 Ir a Encontrar ideas</button></div>';
+    } else {
+      body = '<div class="ac-card" style="background:#F4EEFF;border-color:#E2D6FF"><b>📓 Tu idea, paso a paso</b>Esto es lo que has escrito en cada sección. Cópialo y pégalo donde quieras: en otra IA, en un documento o para mostrárselo a tu familia.</div>' +
+        secs.map(function (x) { return '<div class="ac-card"><b>' + x.ico + ' ' + esc(x.t) + '</b><p style="white-space:pre-wrap;margin-top:4px">' + esc(noteOf(x.id)) + '</p><button class="qx" data-a="acTab" data-t="' + x.id + '">Editar esta nota</button></div>'; }).join('') +
+        '<button class="btn coral block" data-a="acCopy" style="margin-top:6px">📋 Copiar mi cuaderno completo</button>';
+    }
   } else {
     var s = ACADEMIA.filter(function (x) { return x.id === AC_TAB; })[0];
-    body = '<div class="ac-src">' + esc(s.src) + '</div><p class="ac-intro">' + esc(s.intro) + '</p>' + s.items.map(function (it) { return '<div class="ac-card"><b>' + esc(it.t) + '</b>' + esc(it.d) + '</div>'; }).join('');
+    body = '<div class="ac-src">' + esc(s.src) + '</div><p class="ac-intro">' + esc(s.intro) + '</p>' + s.items.map(function (it) { return '<div class="ac-card"><b>' + esc(it.t) + '</b>' + esc(it.d) + '</div>'; }).join('') +
+      '<div class="ac-note"><label for="acNote">✏️ Tus notas de "' + esc(s.t) + '"</label><div class="hint">🦈 Aplica esto a tu propia idea. Se guarda solo, y queda en tu cuaderno.</div><textarea class="in" id="acNote" data-section="' + s.id + '" placeholder="Escribe aquí lo que se te ocurra con este método...">' + esc(noteOf(s.id)) + '</textarea></div>';
   }
   var html = '<div class="ac-hero">' + babySVG() + '<div><b class="disp" style="font-size:20px;color:var(--uva-d)">Academia Bebé Tiburón</b><div class="small muted">Preguntas y métodos que usan los emprendedores para pasar de una ocurrencia a una buena idea.</div></div></div>' +
-    '<div class="ac-chips">' + chips.map(function (c) { return '<button data-a="acTab" data-t="' + c[0] + '" class="' + (AC_TAB === c[0] ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>' + body;
-  if (document.querySelector('.sheet.acad')) { document.getElementById('shBody').innerHTML = html; return; }
-  sheet('Academia', html, 'acad');
+    '<div class="ac-chips">' + chips.map(function (c) { return '<button data-a="acTab" data-t="' + c[0] + '" class="' + (AC_TAB === c[0] ? 'on' : '') + (c[0] !== 'hoy' && c[0] !== 'libros' && c[0] !== 'cuaderno' && noteOf(c[0]) ? ' has' : '') + '">' + c[1] + (c[0] === 'cuaderno' && notesCount() ? '<i class="cnt">' + notesCount() + '</i>' : '') + '</button>'; }).join('') + '</div>' + body;
+  var already = document.querySelector('.sheet.acad');
+  if (already) { document.getElementById('shBody').innerHTML = html; return; }
+  var v = sheet('Academia', html, 'acad');
+  document.getElementById('shBody').addEventListener('input', function (e) {
+    if (e.target && e.target.id === 'acNote') notesSet(e.target.dataset.section, e.target.value);
+  });
+}
+function acCopy() {
+  var secs = ACADEMIA.filter(function (x) { return noteOf(x.id); });
+  var t = 'MI CUADERNO DE IDEAS · Academia Bebé Tiburón · Tiburones en Casa\n';
+  secs.forEach(function (x) { t += '\n=== ' + x.t + ' ===\n' + noteOf(x.id) + '\n'; });
+  t += '\n---\nActúa como mentor de startups. Con estas notas, ayúdame a redactar una idea de negocio clara: el problema, a quién le sirve, cómo la resuelve, y una primera prueba barata para saber si a alguien le interesa. Señala qué falta o qué no queda claro.';
+  copyText(t, '📋 Cuaderno copiado. Pégalo donde quieras.');
 }
 
 // ===================== PANEL DEL ADMINISTRADOR (⚙️) =====================
@@ -1286,13 +1363,17 @@ function inviteText(m) {
     '🦈 ¡Hola ' + m.nombre + '! Te invitamos como Tiburón Invitado a Tiburones en Casa, el juego de ideas de nuestra familia. Tu opinión vale mucho: vas a darle estrellas a nuestras ideas cuando abra la evaluación.\n\nEntra aquí: ' + url + '\nElige tu nombre y usa tu PIN: ' + m.pin + '\n\n¡Gracias por sumarte a la pecera!' :
     '🏎️ ¡Hola ' + m.nombre + '! Ya tienes tu kart en Tiburones en Casa, el juego de ideas de la familia.\n\nEntra aquí: ' + url + '\nElige tu nombre y usa tu PIN: ' + m.pin + '\n\n¡Nos vemos en la pista!';
 }
-var ADM_EDIT = null, ADM_GUEST = false;
+var ADM_EDIT = null, ADM_GUEST = false, ADM_ADD = false;
 function openAdmin(editId, asGuest) {
-  ADM_EDIT = editId || null; ADM_GUEST = !!asGuest;
+  ADM_EDIT = editId || null; ADM_GUEST = !!asGuest; if (editId || asGuest) ADM_ADD = true;
   render();
   if (editId || asGuest) setTimeout(function () { var f = document.getElementById('admForm'); if (f) f.scrollIntoView({ behavior: 'smooth' }); }, 60);
 }
 function linkJugadores() { return (S.cfg && S.cfg.appUrl) || location.href.replace(/admin\.html.*$/, ''); }
+// Convierte el link en texto plano en un <a> clicable, solo para mostrarlo en pantalla (el texto que se copia sigue siendo plano).
+function linkify(text) {
+  return esc(text).replace(/(https?:\/\/[^\s<]+)/g, function (u) { return '<a href="' + u + '" target="_blank" rel="noopener">' + u + '</a>'; });
+}
 function renderAdminPage() {
   var r = S.admin || { members: [], cfg: {} }; ADM = r;
   var c = r.cfg, s = S.season, ide = s.fase === 'ideacion', editId = ADM_EDIT, asGuest = ADM_GUEST;
@@ -1315,8 +1396,8 @@ function renderAdminPage() {
     '<div class="panel"><h3 style="margin-bottom:6px">Invitar</h3><p class="muted small" style="margin-bottom:10px">Cualquiera con el link puede crear su piloto. Tú después ajustas su peso y rol aquí.</p>' +
     '<div class="two"><button class="btn sm" data-a="invGeneral">📨 Invitación a la familia</button><button class="btn sm" data-a="invite" style="background:var(--uva);border-color:var(--uva-d)">🦈 Tiburón Invitado</button></div></div>' +
     '<div class="panel"><h3 style="margin-bottom:6px">Miembros</h3><p class="muted small" style="margin-bottom:6px">El peso de cada evaluador es secreto: nadie más lo ve.</p>' +
-    r.members.map(fila).join('') + '<button class="btn sm ghost block" data-a="admNew" style="margin-top:12px">＋ Agregar miembro a mano</button></div>' +
-    '<div class="panel" id="admForm"><h3 style="margin-bottom:10px">' + (editId ? 'Editar a ' + esc(e.nombre) : asGuest ? 'Invitar a un Tiburón' : 'Agregar miembro') + '</h3><input type="hidden" id="mId" value="' + (editId || '') + '">' +
+    r.members.map(fila).join('') + (ADM_ADD ? '' : '<button class="btn sm ghost block" data-a="admNew" style="margin-top:12px">＋ Agregar miembro a mano</button>') + '</div>' +
+    (!ADM_ADD ? '' : '<div class="panel" id="admForm"><h3 style="margin-bottom:10px">' + (editId ? 'Editar a ' + esc(e.nombre) : asGuest ? 'Invitar a un Tiburón' : 'Agregar miembro') + '</h3><input type="hidden" id="mId" value="' + (editId || '') + '">' +
     '<div class="field"><label for="mN">Nombre</label><input class="in" id="mN" value="' + esc(e.nombre) + '" placeholder="' + (asGuest ? 'Ej: La Experta' : 'Ej: Sofía') + '"></div>' +
     '<div class="field"><label for="mE">Correo (para avisos)</label><input class="in" id="mE" type="email" value="' + esc(e.email) + '"></div>' +
     '<div class="two"><div class="field"><label for="mP">PIN (4 números)</label><input class="in" id="mP" inputmode="numeric" maxlength="4" value="' + esc(e.pin) + '"></div>' +
@@ -1324,7 +1405,7 @@ function renderAdminPage() {
     '<div class="field"><label for="mR">Rol</label><select class="in" id="mR">' + [['jugador', 'Jugador'], ['admin', 'Administrador (entra a este panel)'], ['invitado', 'Tiburón Invitado (solo evalúa)']].map(function (o) { return '<option value="' + o[0] + '"' + (e.rol === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
     '<div class="field"><label>Si es Tiburón Invitado, ¿qué fases evalúa?</label><div style="display:flex;gap:14px;flex-wrap:wrap">' + [1, 2, 3, 4].map(function (n) { return '<label style="font-weight:700"><input type="checkbox" class="mL" value="' + n + '"' + (lv.indexOf(String(n)) >= 0 ? ' checked' : '') + '> ' + NIV_NOM[n] + '</label>'; }).join('') + '</div><div class="muted small">Para tu evaluador profesional marca solo Podio.</div></div>' +
     (editId ? '<div class="field"><label style="font-weight:700"><input type="checkbox" id="mA"' + (e.activo ? ' checked' : '') + '> Activo (si lo desmarcas, no puede entrar)</label></div>' : '') +
-    '<button class="btn coral block" data-a="admSave">' + (editId ? 'Guardar cambios' : asGuest ? 'Crear Tiburón Invitado' : 'Agregar a la familia') + '</button>' + (editId || asGuest ? '<button class="own" data-a="admCancel">Cancelar</button>' : '') + '</div>' +
+    '<button class="btn coral block" data-a="admSave">' + (editId ? 'Guardar cambios' : asGuest ? 'Crear Tiburón Invitado' : 'Agregar a la familia') + '</button><button class="own" data-a="admCancel">Cancelar</button></div>') +
     '<div class="panel"><h3 style="margin-bottom:10px">Reglas del juego</h3>' +
     '<div class="two"><div class="field"><label for="cI">Días de ideación</label><input class="in" id="cI" type="number" min="1" value="' + c.ideaDays + '"></div><div class="field"><label for="cE">Días de evaluación</label><input class="in" id="cE" type="number" min="1" value="' + c.evalDays + '"></div></div>' +
     '<p class="muted small" style="margin:-6px 0 12px">Los cambios de días se aplican desde la próxima fase.</p>' +
@@ -1333,6 +1414,7 @@ function renderAdminPage() {
     '<div class="field"><label for="cU">Link de la app de jugadores</label><input class="in" id="cU" value="' + esc(c.appUrl) + '" placeholder="https://tuusuario.github.io/tiburones-en-casa/"><div class="muted small">Es el que va en los correos y en las invitaciones.</div></div>' +
     '<button class="btn block" data-a="cfgSave">Guardar reglas</button></div>' +
     '<div class="sec-t"><h3>Avisos recientes</h3></div><div class="panel bell-list">' + (S.events.length ? S.events.map(function (ev) { return '<div class="ev"><div style="flex:1">' + esc(ev.texto) + '<small>' + ago(ev.fecha) + '</small></div></div>'; }).join('') : '<p class="muted">Sin novedades.</p>') + '</div>' +
+    '<div class="panel danger"><h3 style="margin-bottom:6px">⚠️ Zona de peligro</h3><p class="muted small" style="margin-bottom:10px">Borra miembros, ideas, votos, puntos, avisos y temporadas. Queda todo como recién instalado. Antes se intenta guardar una copia completa en Drive.</p><button class="btn ghost block" data-a="resetOpen" style="border-color:#E3413D;color:#C9302C">🗑️ Reiniciar todo</button></div>' +
     '</main>';
   $app.innerHTML = html;
 }
@@ -1355,7 +1437,7 @@ function admSave(btn) {
   api('saveMember', { m: m }).then(function (r) {
     busy(btn, false); if (!r.ok) return toast(r.error, true);
     toast('✅ Guardado');
-    ADM_EDIT = null; ADM_GUEST = false;
+    ADM_EDIT = null; ADM_GUEST = false; ADM_ADD = false;
     after(r).then(function () { ADM = S.admin; if (isNew) openInvite(m); });
   });
 }
@@ -1478,6 +1560,31 @@ function welcome() {
   document.getElementById('toasts').appendChild(w); setTimeout(close, 7000);
 }
 
+// ===================== ZONA DE PELIGRO: REINICIAR TODO =====================
+function openReset() {
+  sheet('¿Reiniciar todo?', '<div class="panel danger2"><p>Esto borra <b>todos los miembros, ideas, votos, puntos, avisos y temporadas</b>. Nadie va a poder entrar con su PIN actual, ni tú. Va a quedar como recién instalada.</p>' +
+    '<p style="margin-top:10px">Antes de borrar, se intenta guardar una <b>copia completa de la Sheet en Google Drive</b>, por si acaso.</p>' +
+    '<p style="margin-top:10px;font-weight:900">Esta acción no se puede deshacer.</p></div>' +
+    '<div class="field"><label for="rsT">Para confirmar, escribe <b>REINICIAR</b></label><input class="in" id="rsT" autocomplete="off" placeholder="REINICIAR"></div>' +
+    '<button class="btn block" id="rsBtn" data-a="resetGo" disabled style="background:#E3413D;border-color:#B32B27;color:#fff">🗑️ Reiniciar todo, sin vuelta atrás</button>' +
+    '<button class="own" data-a="closeSheet">Mejor no, cancelar</button>');
+  document.getElementById('rsT').addEventListener('input', function (e) { document.getElementById('rsBtn').disabled = e.target.value.trim() !== 'REINICIAR'; });
+  setTimeout(function () { var t = document.getElementById('rsT'); if (t) t.focus(); }, 60);
+}
+function doReset(btn) {
+  busy(btn, true);
+  api('resetAll', { confirmar: 'REINICIAR' }).then(function (r) {
+    busy(btn, false); if (!r.ok) return toast(r.error, true);
+    closeSheet();
+    try { localStorage.clear(); } catch (e) { }
+    SES = null; S = null;
+    var msg = '🏁 Todo quedó reiniciado.' + (r.backupUrl ? ' Guardé una copia en Drive antes de borrar.' : r.backupError ? ' (No se pudo hacer la copia de respaldo.)' : '');
+    if (r.backupUrl) { var w = window.open(r.backupUrl, '_blank'); if (!w) toast(msg, false); }
+    toast(msg);
+    loadPublic();
+  });
+}
+
 // ===================== REGISTRO DE PILOTOS =====================
 function doRegister(btn) {
   var g = function (id) { return (document.getElementById(id).value || '').trim(); };
@@ -1509,6 +1616,7 @@ var ACT = {
   },
   pilot: function (d) { openPin(d.id); },
   key: function (d) { pinKey(d.k); },
+  pinGo: function () { pinSubmit(); },
   form: function (d) { if (isGuest()) return; openForm(d.mode, d.id); },
   submitForm: function (d, el) { submitForm(el); },
   idea: function (d) { openIdea(d.id); },
@@ -1527,8 +1635,9 @@ var ACT = {
   academia: function () { openAcademia(); },
   acTab: function (d) { AC_TAB = d.t; openAcademia(); var sh = document.querySelector('.sheet'); if (sh) sh.scrollTop = 0; },
   acOtra: function () { document.getElementById('acQ').textContent = PREGUNTAS_DIA[Math.floor(Math.random() * PREGUNTAS_DIA.length)]; },
+  acCopy: function () { acCopy(); },
   admin: function () { openAdmin(); },
-  admNew: function () { openAdmin(null, false); },
+  admNew: function () { ADM_EDIT = null; ADM_GUEST = false; ADM_ADD = true; render(); setTimeout(function () { var f = document.getElementById('admForm'); if (f) f.scrollIntoView({ behavior: 'smooth' }); }, 60); },
   admEdit: function (d) { openAdmin(d.id); },
   admInvite: function (d) { var m = ADM.members.filter(function (x) { return x.id === d.id; })[0]; if (m) openInvite(m); },
   invite: function () { openAdmin(null, true); },
@@ -1541,7 +1650,9 @@ var ACT = {
   backLogin: function () { renderLogin(); },
   doRegister: function (d, el) { doRegister(el); },
   invGeneral: function () { inviteGeneral(); },
-  admCancel: function () { ADM_EDIT = null; ADM_GUEST = false; render(); },
+  admCancel: function () { ADM_EDIT = null; ADM_GUEST = false; ADM_ADD = false; render(); },
+  resetOpen: function () { openReset(); },
+  resetGo: function (d, el) { doReset(el); },
   requestJoin: function (d, el) { joinAct('requestJoin', { ideaId: d.id }, el, '🤝 Solicitud enviada. Le avisamos al fundador.'); },
   cancelJoin: function (d, el) { joinAct('cancelJoin', { ideaId: d.id }, el, 'Solicitud cancelada'); },
   respondJoin: function (d, el) { joinAct('respondJoin', { ideaId: d.id, miembroId: d.m, aceptar: d.ok === '1' }, el, d.ok === '1' ? '🤝 ¡Nuevo socio en tu equipo!' : 'Solicitud rechazada'); },
