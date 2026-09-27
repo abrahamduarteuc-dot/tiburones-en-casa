@@ -1160,9 +1160,10 @@ function ideaText(i) {
   Object.keys(i.aclaraciones || {}).forEach(function (k) { t += '\n=== Aclaración del equipo (' + NIV_NOM[Number(k.split('-')[0])] + ') ===\n' + i.aclaraciones[k] + '\n'; });
   var qs = (i.preguntas || []).filter(function (p) { return !p.oculta; });
   if (qs.length) { t += '\n=== Preguntas y respuestas de los evaluadores ===\n'; qs.forEach(function (p) { t += '\n• Pregunta de ' + mem(p.autorId).nombre + ': ' + p.texto + '\n  Respuesta: ' + (p.respuesta || '(sin responder)') + '\n'; }); }
-  return t + '\n---\nActúa como un jurado exigente de Shark Tank y como experto en startups. Evalúa esta idea con honestidad: ' +
-    'califica de 1 a 5 su novedad, impacto, factibilidad y potencial de negocio, explica sus puntos débiles, ' +
-    'dime si ya existe algo parecido y propón 3 preguntas que el equipo debería responder para mejorarla.';
+  return t + '\n---\nActúa como un crítico implacable, experto y objetivo. No me preguntes nada antes de responder: si algo no está claro, elige el supuesto más razonable, dilo en una línea, y sigue con el análisis completo. Olvida la cortesía y la complacencia; no me digas lo que quiero escuchar ni intentes validar mis sentimientos. ' +
+    'Antes de opinar, busca si esta idea ya existe (nombres de empresas, productos o proyectos similares, aquí o en otros países) y usa lo que encuentres como base de la crítica, no solo tu razonamiento en abstracto. ' +
+    'Tu objetivo es encontrar los puntos débiles, errores de lógica, sesgos o fallas en esta idea: si el problema que ataca es real, quién pagaría por resolverlo, qué se necesita para construirla (capital, datos, permisos, tiempo), qué ventaja tiene este equipo frente a quien ya lo intentó, y qué la mataría en los primeros 18 meses. Sé brutalmente honesto y desmóntala con lupa. ' +
+    'Después de destrozarla, no te quedes ahí: dime qué parte, si alguna, vale la pena salvar, y dame 2 o 3 formas concretas y distintas de reorientarla para que tenga una oportunidad real.';
 }
 function copyIdea(id) { var i = findIdea(id); if (i.oculta) return toast('Se podrá copiar cuando abra la evaluación', true); copyText(ideaText(i), '📋 Idea copiada. Pégala en tu IA favorita.'); }
 function shareIdea(id) { var i = findIdea(id); navigator.share({ title: i.titulo, text: ideaText(i) }).catch(function () { }); }
