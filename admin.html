@@ -423,9 +423,10 @@ button.brand{text-align:left;position:relative;padding:2px 0}
 // ===================== CONTENIDO =====================
 var PREGUNTAS = {
   1: [
-    { q: '¿Qué problema resuelve?', h: 'En una sola frase. Si no cabe en una frase, todavía no está clara.', ph: 'Ej: Lavar el auto nos quita medio sábado.' },
-    { q: '¿A quién le sirve?', h: 'Piensa en una persona concreta, no en "todo el mundo".', ph: 'Ej: Papás que trabajan toda la semana.' },
+    { q: '¿Qué problema resuelve, y de verdad les duele?', h: 'En una sola frase. Si nadie sufre de verdad por esto hoy, no hay nada que resolver.', ph: 'Ej: Lavar el auto nos quita medio sábado.' },
+    { q: '¿A quién le sirve? ¿Quién tiene exactamente ese problema?', h: 'Piensa en una persona concreta, no en "todo el mundo". Mientras más exacto, mejor.', ph: 'Ej: Papás que trabajan toda la semana.' },
     { q: '¿Cómo lo resuelve tu idea?', h: 'Cuenta qué hace tu idea, como si se lo explicaras a un niño de 10 años.', ph: 'Ej: Un equipo va a tu casa con agua reciclada y lo lava en 30 minutos.' },
+    { q: '¿Cuál sería la versión más simple para probarla ya?', h: 'No pienses en la versión perfecta. La más chica y barata que podrías hacer esta misma semana, sin gastar casi nada. Los emprendedores le dicen MVP: la versión mínima que ya se puede probar.', ph: 'Ej: Yo mismo lavo un auto de un vecino este sábado, sin equipo especial, solo para ver si le sirve.' },
     { q: '¿Por qué te emociona?', h: 'Las ideas que te importan son las que vas a empujar cuando se ponga difícil.', ph: 'Ej: Porque yo mismo lo necesito cada semana.' },
     { q: 'Cuéntanos un ejemplo real de uso', h: 'Imagina a esa persona usando tu idea un día cualquiera. ¿Qué pasa?', ph: 'Ej: Don Luis pide el lavado por WhatsApp el viernes y el sábado va al fútbol con su hijo.' }
   ],
@@ -433,7 +434,7 @@ var PREGUNTAS = {
     { q: 'Tu idea en una frase de pitch', h: 'Completa la plantilla de Geoffrey Moore: Para [cliente] que [necesita algo], [mi idea] es un [tipo de producto] que [beneficio]. A diferencia de [alternativa], nosotros [diferencia].', ph: 'Para ___ que ___, ___ es un ___ que ___. A diferencia de ___, nosotros ___.' },
     { q: '¿Cómo resuelve hoy la gente este problema?', h: 'Tu competencia real muchas veces no es otra empresa: es "hacerlo a mano" o "no hacer nada".', ph: 'Ej: Lo lavan ellos mismos o van a un lavado en la bencinera.' },
     { q: '¿Ya existe algo parecido?', h: 'Búscalo en Google antes de responder. Cuéntanos qué encontraste y en qué te diferencias.', ph: 'Ej: Existe X en Santiago, pero solo para empresas.' },
-    { q: '¿Quién pagaría y cuánto cobrarías?', h: 'El que usa no siempre es el que paga. Pon un precio concreto, aunque sea una apuesta.', ph: 'Ej: El dueño del auto, $12.000 por lavado.' },
+    { q: '¿Quién pagaría, cuánto cobrarías, y estás seguro de que pagarían de verdad?', h: 'El que usa no siempre es el que paga. Pon un precio concreto, aunque sea una apuesta, y piensa si de verdad sacarían la billetera.', ph: 'Ej: El dueño del auto, $12.000 por lavado.' },
     { q: '¿Cuál sería la prueba más barata para saber si le interesa a alguien?', h: 'Antes de construir, prueba. Una publicación, un formulario o vender a 5 conocidos cuenta.', ph: 'Ej: Ofrecerlo a 10 vecinos por el grupo del condominio y ver cuántos reservan.' }
   ],
   3: [
@@ -446,7 +447,9 @@ var PREGUNTAS = {
   ],
   4: [
     { q: 'Tu pitch de 60 segundos', h: 'Problema, solución, por qué ahora, por qué ustedes y qué lograron probar. Léelo en voz alta con cronómetro.', ph: 'Imagina que estás frente a los tiburones...' },
-    { q: '¿Qué le pedirías a un inversionista?', h: 'Monto, qué harías con él y qué ofreces a cambio (porcentaje, devolución, participación).', ph: 'Ej: $1.000.000 para 2 equipos más, a cambio del 20% de las ganancias por un año.' }
+    { q: '¿Qué le pedirías a un inversionista?', h: 'Monto, qué harías con él y qué ofreces a cambio (porcentaje, devolución, participación).', ph: 'Ej: $1.000.000 para 2 equipos más, a cambio del 20% de las ganancias por un año.' },
+    { q: '¿Con qué tecnología la construirían?', h: 'Recién aquí se decide el stack: las herramientas, apps o equipos que usarían para construirla (por ejemplo, "una planilla y WhatsApp" cuenta). Se decide ahora porque ya demostraron que a la gente le importa el problema.', ph: 'Ej: Una app hecha con Google Sheets y WhatsApp para partir, sin gastar en programador.' },
+    { q: '¿Cómo la harían crecer si funciona?', h: 'Solo después de demostrar demanda. Piensa en el siguiente paso si esto despega: más clientes, más zonas, más gente en el equipo.', ph: 'Ej: Si funciona en nuestro condominio, lo ofrecemos en los 3 condominios vecinos.' }
   ]
 };
 var ANCLAS = ['', 'Débil, no convence', 'Tiene algo, le falta mucho', 'Correcta, razonable', 'Muy buena, destaca', 'Excepcional, me la robaría'];
@@ -896,7 +899,7 @@ function tabIdear() {
   if (s.nivel === 1) {
     if (S.me.puedeLanzar) {
       h += (s.intento > 1 ? '<div class="panel note">🔁 En la ronda anterior ninguna idea alcanzó ' + S.cfg.threshold + ' ⭐. ¡Todavía puedes entrar a la pista!</div>' : '') +
-        '<section class="hero"><h2>¿Qué problema resolvemos hoy?</h2><p>Cada piloto entra con una idea. Lánzala en 5 preguntas y gana ' + S.puntosRegla.idea + ' puntos.</p><button class="btn coral" data-a="form" data-mode="new">＋ Lanzar mi idea</button>' + av(S.me.id).replace('<svg', '<svg class="hk"') + '<div class="wave"></div></section>';
+        '<section class="hero"><h2>¿Qué problema resolvemos hoy?</h2><p>Cada piloto entra con una idea. Lánzala en ' + PREGUNTAS[1].length + ' preguntas y gana ' + S.puntosRegla.idea + ' puntos.</p><button class="btn coral" data-a="form" data-mode="new">＋ Lanzar mi idea</button>' + av(S.me.id).replace('<svg', '<svg class="hk"') + '<div class="wave"></div></section>';
     } else if (yo) {
       h += (s.intento > 1 ? '<div class="panel note">🔁 Nadie alcanzó ' + S.cfg.threshold + ' ⭐ en la ronda anterior, así que se repite Chispa. Revisa los consejos que te dejaron, mejora tu idea o cámbiala por completo.</div>' : '') +
         '<div class="sec-t" style="margin-top:4px"><h3>Tu idea en la pista</h3></div>' + ideaCard(yo, '', '<button class="btn sm coral" data-a="form" data-mode="edit" data-id="' + yo.id + '">✏️ Editar o cambiar enfoque</button><button class="btn sm ghost" data-a="idea" data-id="' + yo.id + '">Ver ficha</button>') +
@@ -1263,7 +1266,7 @@ function openMenu() {
   document.body.appendChild(mv);
 }
 var TOUR = [
-  ['💡', 'Lanza tu idea', 'Cada piloto entra a la temporada con una idea. Solo respondes 5 preguntas cortas.'],
+  ['💡', 'Lanza tu idea', 'Cada piloto entra a la temporada con una idea. Solo respondes {N} preguntas cortas.'],
   ['⭐', 'La familia vota', 'Todos le dan estrellas a las ideas de los demás. Si una idea junta {U} estrellas o más, pasa a la siguiente fase.'],
   ['🔁', '¿Nadie pasó?', 'No pasa nada: se repite la fase. Mejoras tu idea, o la cambias, y se vota otra vez.'],
   ['🤝', 'Si tu idea sale, tú sigues', 'Te unes como socio a una idea que sigue en carrera y la ayudas a ganar.'],
@@ -1276,7 +1279,7 @@ function showTour() {
 }
 function renderTour() {
   var t = TOUR[TOUR_I], last = TOUR_I === TOUR.length - 1;
-  var html = '<div class="tour"><div class="tico">' + t[0] + '</div><h2>' + t[1] + '</h2><p>' + t[2].replace('{U}', S.cfg.threshold) + '</p>' +
+  var html = '<div class="tour"><div class="tico">' + t[0] + '</div><h2>' + t[1] + '</h2><p>' + t[2].replace('{U}', S.cfg.threshold).replace('{N}', PREGUNTAS[1].length) + '</p>' +
     '<div class="tdots">' + TOUR.map(function (x, k) { return '<i class="' + (k === TOUR_I ? 'on' : '') + '"></i>'; }).join('') + '</div>' +
     '<button class="btn coral block" data-a="tourNext">' + (last ? '¡A la pista! 🏁' : 'Siguiente') + '</button>' +
     (last ? '<button class="btn ghost block" data-a="rules" style="margin-top:8px">Ver las reglas completas</button>' : '<button class="own" data-a="tourEnd">Saltar presentación</button>') + '</div>';
