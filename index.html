@@ -631,13 +631,22 @@ function netOff() {
   NET = Math.max(0, NET - 1);
   if (!NET) { clearTimeout(NET_T); var b = document.getElementById('netbar'); if (b) b.classList.remove('on'); }
 }
-function api(action, extra) {
+// Un intento silencioso de más antes de rendirse: absorbe el "servidor ocupado" o un
+// despertar lento sin que la persona vea ningún error ni tenga que tocar nada de nuevo.
+function api(action, extra, _retry) {
   var req = Object.assign({ action: action }, SES || {}, extra || {});
   netOn();
   return fetch(API_URL, { method: 'POST', body: JSON.stringify(req) })
     .then(function (r) { return r.json(); })
-    .catch(function () { return { ok: false, error: 'Sin conexión con el servidor. Revisa tu internet e intenta de nuevo.' }; })
-    .finally(netOff);
+    .then(function (r) {
+      if (!r.ok && !_retry && /ocupado|conexión/i.test(r.error || '')) { netOff(); return new Promise(function (res) { setTimeout(res, 1200); }).then(function () { return api(action, extra, true); }); }
+      netOff(); return r;
+    })
+    .catch(function () {
+      netOff();
+      if (!_retry) return new Promise(function (res) { setTimeout(res, 1200); }).then(function () { return api(action, extra, true); });
+      return { ok: false, error: 'Sin conexión con el servidor. Revisa tu internet e intenta de nuevo.' };
+    });
 }
 
 // ===================== AVATARES: TIBURÓN EN KART =====================
