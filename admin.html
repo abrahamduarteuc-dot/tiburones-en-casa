@@ -413,6 +413,22 @@ button.brand{text-align:left;position:relative;padding:2px 0}
 .panel.nuevos{border-color:var(--coral);background:#FFF6F3}
 .panel.danger{border-color:#E3413D;background:#FFF3F2}
 .panel.danger2{background:#FFF3F2;border:2px solid #E3413D;border-bottom-width:5px;border-radius:18px;padding:14px 16px;font-size:15px;line-height:1.5}
+.carriles{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+@media(min-width:760px){.carriles{grid-template-columns:repeat(4,1fr)}}
+.carril{background:#fff;border:2px solid var(--linea);border-bottom-width:5px;border-radius:18px;padding:10px;min-width:0}
+.carril.l1{border-color:#FFE6A3}.carril.l2{border-color:#BDE9D8}.carril.l3{border-color:#C9DDF5}.carril.l4{border-color:#FFD0C7}
+.carril-h{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.carril-h span{font-size:18px}.carril-h b{flex:1;font-size:15px}
+.carril-h i{font-style:normal;font-weight:900;font-size:12px;background:var(--laguna);border-radius:999px;padding:2px 8px;color:var(--muted)}
+.carril-i{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:6px;border-radius:12px;position:relative}
+.carril-i:hover{background:var(--laguna)}
+.carril-i svg{width:44px;height:36px;flex:none}
+.carril-i div{min-width:0;flex:1}
+.carril-i b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.carril-i small{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.carril-me{font-size:14px}
+.carril-empty{font-size:13px;color:var(--muted);font-weight:700;padding:6px 4px}
+.panel.draft{border-style:dashed;border-color:#C9B6FF;background:#FBF8FF}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -672,7 +688,11 @@ function sharkParts(c, eyeR) {
     '<path d="M81 49.3 L83 53 L85 50.2 Z M88 50.3 L89.6 53.6 L91.4 49.8 Z" fill="#fff" stroke="#14324A" stroke-width=".8" stroke-linejoin="round"/>';
 }
 function avatarSVG(av, id) {
-  av = av || defAv(id);
+  // Blindaje: si un avatar viene incompleto (p. ej. editado a mano en la Sheet), se completa con el de defecto.
+  var base = defAv(id);
+  av = (av && typeof av === 'object') ? Object.assign({}, base, av) : base;
+  if (!/^#[0-9a-fA-F]{6}$/.test(String(av.k))) av.k = base.k;
+  if (!/^#[0-9a-fA-F]{6}$/.test(String(av.s))) av.s = base.s;
   var k = av.k, kd = shade(k, -0.28), s = av.s, acc = av.a || '', accEl = '';
   if (acc === '🕶️') accEl = '<text x="84" y="39" font-size="19" text-anchor="middle">🕶️</text>';
   else if (acc === '🎧') accEl = '<text x="70" y="30" font-size="26" text-anchor="middle">🎧</text>';
@@ -833,19 +853,21 @@ function pinSubmit() {
 // ===================== RENDER PRINCIPAL =====================
 function isGuest() { return S.me.rol === 'invitado'; }
 function isAdmin() { return S.me.rol === 'admin'; }
-function actuales() { return S.ideas.filter(function (i) { return i.temporada === S.season.n; }); }
-function vivas() { return actuales().filter(function (i) { return i.estado === 'lista' || i.estado === 'pendiente'; }); }
+function actuales() { return S.ideas.filter(function (i) { return i.estado !== 'borrador'; }); }
+function vivas() { return S.ideas.filter(function (i) { return i.estado === 'lista' || i.estado === 'pendiente'; }); }
+function misBorradores() { return (S.me.borradorIds || []).map(findIdea).filter(Boolean); }
+function intentoTxt(i) { return i.intentos ? ' · intento ' + (i.intentos + 1) + ' de ' + i.intentosMax : ''; }
 function pending() { return S.ideas.filter(function (i) { return i.puedeVotar; }); }
 function enParrilla() { return vivas().filter(function (i) { return i.estado === 'lista'; }); }
 // Ahora una persona puede tener varias ideas vivas a la vez (propias y, como mucho, una ajena de socio).
 function misEquipos() { return (S.me.equipoIds || []).map(findIdea).filter(Boolean).sort(function (a, b) { return b.nivel - a.nivel; }); }
 function unread() { var seen = LS.get('tec_seen_' + S.me.id, ''); return S.events.filter(function (e) { return e.fecha > seen && e.actorId !== S.me.id; }).length; }
-function nivelTxt() { var s = S.season; return NIV_ICO[s.nivel] + ' ' + NIV_NOM[s.nivel] + (s.intento > 1 ? ' · intento ' + s.intento : ''); }
+function nivelTxt() { return '🏁 Gran Premio #' + S.season.ciclo; }
 function phaseBar() {
   var s = S.season, ide = s.fase === 'ideacion';
   var total = (new Date(s.faseFin) - new Date(s.faseInicio)) || 1, done = Math.min(1, Math.max(0, (Date.now() - new Date(s.faseInicio)) / total));
-  return '<div class="phase ' + (ide ? 'ph-i' : 'ph-e') + '"><div class="ph-row"><span class="ph-ico">' + (ide ? '💡' : '⭐') + '</span><div class="ph-txt"><b>Temporada ' + s.n + ' · ' + nivelTxt() + '</b><span>' +
-    (ide ? 'Ideación: se sube y se edita. La evaluación abre el ' + fecha(s.faseFin) + '.' : 'Evaluación: se vota y no se edita. Cierra el ' + fecha(s.faseFin) + '.') +
+  return '<div class="phase ' + (ide ? 'ph-i' : 'ph-e') + '"><div class="ph-row"><span class="ph-ico">' + (ide ? '💡' : '⭐') + '</span><div class="ph-txt"><b>' + nivelTxt() + '</b><span>' +
+    (ide ? 'Ideación: publica, mejora y completa. La evaluación abre el ' + fecha(s.faseFin) + '.' : 'Evaluación: se votan todas las ideas, cada una en su fase. Cierra el ' + fecha(s.faseFin) + '.') +
     '</span></div><div class="ph-left"><b>' + left(s.faseFin) + '</b>' + (ide ? 'para idear' : 'para votar') + '</div></div><div class="ph-bar"><span style="width:' + Math.round(done * 100) + '%"></span></div></div>';
 }
 function render() {
@@ -896,51 +918,42 @@ function solicitudesHTML(i) {
   }).join('') + '<p class="muted small" style="margin-top:6px">Un socio puede editar las respuestas, responder preguntas y comparte los puntos del equipo. Tú sigues siendo el fundador.</p></div>';
 }
 function tabIdear() {
-  var s = S.season, ide = ideacion(), eqs = misEquipos(), h = phaseBar();
+  var s = S.season, ide = ideacion(), eqs = misEquipos(), borr = misBorradores(), h = phaseBar();
+  var editarBtn = function (eq) {
+    return eq.puedeEditar ? '<button class="btn sm ' + (eq.estado === 'pendiente' ? 'alga' : 'coral') + '" data-a="form" data-mode="edit" data-id="' + eq.id + '">' + (eq.estado === 'pendiente' ? 'Completar ' + NIV_NOM[eq.nivel] : '✏️ Editar') + '</button>' : '';
+  };
   if (!ide) {
-    h += '<section class="hero locked"><h2>Ahora evalúan los tiburones</h2><p>Las ideas quedaron congeladas para que todos evalúen lo mismo. Vuelves a idear en ' + left(s.faseFin) + '.</p><button class="btn sol" data-a="tab" data-t="evaluar">Ir a evaluar</button>' + av(S.me.id).replace('<svg', '<svg class="hk"') + '<div class="wave"></div></section>';
-    var tasks = '';
+    h += '<section class="hero locked"><h2>Ahora evalúan los tiburones</h2><p>Las ideas quedaron congeladas para que todos evalúen lo mismo. Mientras tanto, puedes escribir borradores para el próximo Gran Premio.</p><button class="btn sol" data-a="tab" data-t="evaluar">Ir a evaluar</button>' + av(S.me.id).replace('<svg', '<svg class="hk"') + '<div class="wave"></div></section>';
     var sinResp = eqs.filter(function (e) { return e.sinResponder; });
     if (sinResp.length) {
-      var totalQ = sinResp.reduce(function (s2, e) { return s2 + e.sinResponder; }, 0);
-      var single = sinResp.length === 1;
-      tasks += '<div class="panel task"><div class="t-ico" style="background:#FFE1DB">❓</div><div class="t-txt"><b>' + totalQ + (totalQ === 1 ? ' pregunta' : ' preguntas') + (single ? ' para "' + esc(sinResp[0].titulo) + '"' : ' repartidas en ' + sinResp.length + ' de tus equipos') + '</b><span class="muted small">Cualquier integrante puede responder.</span></div><button class="btn sm coral" data-a="' + (single ? 'idea' : 'tab') + '" data-id="' + (single ? sinResp[0].id : '') + '" data-t="mis">Responder</button></div>';
+      var totalQ = sinResp.reduce(function (a, e) { return a + e.sinResponder; }, 0), uno = sinResp.length === 1;
+      h += '<div class="panel task"><div class="t-ico" style="background:#FFE1DB">❓</div><div class="t-txt"><b>' + totalQ + (totalQ === 1 ? ' pregunta' : ' preguntas') + (uno ? ' para "' + esc(sinResp[0].titulo) + '"' : ' en ' + sinResp.length + ' de tus equipos') + '</b><span class="muted small">Cualquier integrante puede responder.</span></div><button class="btn sm coral" data-a="' + (uno ? 'idea' : 'tab') + '" data-id="' + (uno ? sinResp[0].id : '') + '" data-t="mis">Responder</button></div>';
     }
-    var pc = pending().length;
-    if (pc) tasks += '<div class="panel task"><div class="t-ico" style="background:#FFF3CF">⭐</div><div class="t-txt"><b>' + pc + (pc === 1 ? ' idea espera' : ' ideas esperan') + ' tus estrellas</b><span class="muted small">Cada evaluación suma ' + S.puntosRegla.voto + ' puntos.</span></div><button class="btn sm sol" data-a="tab" data-t="evaluar">Evaluar</button></div>';
-    return h + (tasks ? '<div class="sec-t"><h3>Mientras tanto</h3></div>' + tasks : '') + '<button class="btn ghost block" data-a="rules" style="margin-top:14px">¿Cómo se juega?</button>' + miniRanking();
+  } else if (S.me.puedeLanzar) {
+    h += '<section class="hero"><h2>¿Qué problema resolvemos hoy?</h2><p>Chispa siempre está abierta. Puedes publicar ' + (S.me.cupoLibre === 1 ? '1 idea' : S.me.cupoLibre + ' ideas') + ' en este Gran Premio y ganas ' + S.puntosRegla.idea + ' puntos cuando se evalúe.</p><button class="btn coral" data-a="form" data-mode="new">＋ Lanzar una idea</button>' + av(S.me.id).replace('<svg', '<svg class="hk"') + '<div class="wave"></div></section>';
+  } else if (!isGuest()) {
+    h += '<div class="panel note">✅ Ya publicaste tu idea de este Gran Premio. Si tienes más, guárdalas como borrador y publícalas en el próximo.</div>';
   }
-  if (s.intento > 1) h += '<div class="panel note">🔁 En la ronda anterior ninguna idea alcanzó ' + S.cfg.threshold + ' ⭐: se repite ' + NIV_NOM[s.nivel] + '. Mejora lo que ya tienes, cámbialo, o suma una idea nueva.</div>';
-  if (s.nivel === 1) {
-    if (S.me.puedeLanzar) {
-      h += '<section class="hero"><h2>¿Qué problema resolvemos hoy?</h2><p>' + (eqs.length ? 'Lanza otra idea cuando quieras: no hay límite.' : 'Cada piloto entra con una idea.') + ' Respóndela en ' + PREGUNTAS[1].length + ' preguntas y gana ' + S.puntosRegla.idea + ' puntos.</p><button class="btn coral" data-a="form" data-mode="new">＋ ' + (eqs.length ? 'Lanzar otra idea' : 'Lanzar mi idea') + '</button>' + av(S.me.id).replace('<svg', '<svg class="hk"') + '<div class="wave"></div></section>';
-    }
-    if (eqs.length) {
-      h += '<div class="sec-t" style="margin-top:4px"><h3>' + (eqs.length === 1 ? 'Tu idea en la pista' : 'Tus ' + eqs.length + ' ideas en la pista') + '</h3></div>' +
-        eqs.map(function (yo) { return ideaCard(yo, '', '<button class="btn sm coral" data-a="form" data-mode="edit" data-id="' + yo.id + '">✏️ Editar o cambiar enfoque</button><button class="btn sm ghost" data-a="idea" data-id="' + yo.id + '">Ver ficha</button>'); }).join('') +
-        '<p class="muted small">Puedes editarlas cuantas veces quieras hasta el ' + fecha(s.faseFin) + '.</p>';
-    }
-  } else {
-    if (eqs.length) {
-      h += '<div class="sec-t" style="margin-top:4px"><h3>' + (eqs.length === 1 ? 'Tu equipo' : 'Tus ' + eqs.length + ' equipos') + '</h3></div>' +
-        eqs.map(function (eq) {
-          var accion = eq.estado === 'pendiente' ? '<div class="panel note alga-n">🧩 ¡"' + esc(eq.titulo) + '" pasó a ' + NIV_NOM[eq.nivel] + '! Respondan las nuevas preguntas antes del ' + fecha(s.faseFin) + '. Si no las completan, la idea queda fuera.</div>' : '';
-          return (eq.campeona ? '<div class="panel champ-n">⭐ <b>"' + esc(eq.titulo) + '" es la única idea en carrera!</b> Toda la familia puede sumarse. Llévenla hasta el Podio.</div>' : '') + accion +
-            ideaCard(eq, '', eq.puedeEditar ? '<button class="btn sm ' + (eq.estado === 'pendiente' ? 'alga' : 'coral') + '" data-a="form" data-mode="edit" data-id="' + eq.id + '">' + (eq.estado === 'pendiente' ? 'Completar ' + NIV_NOM[eq.nivel] : '✏️ Editar ' + NIV_NOM[eq.nivel]) + '</button><button class="btn sm ghost" data-a="idea" data-id="' + eq.id + '">Ver ficha</button>' : '') +
-            solicitudesHTML(eq);
-        }).join('');
-    }
-    if (!isGuest() && S.me.puedeUnirse) {
-      var vv = vivas().filter(function (i) { return eqs.every(function (e) { return e.id !== i.id; }); });
-      if (vv.length) h += '<section class="hero join"><h2>¡La carrera sigue!</h2><p>Puedes sumarte como socio a una idea en carrera y competir con ella' + (eqs.length ? ', además de las tuyas' : '') + '.</p>' + av(S.me.id).replace('<svg', '<svg class="hk"') + '<div class="wave"></div></section>' +
-        '<div class="sec-t"><h3>Ideas en carrera</h3><span class="muted small">Elige tu bandera</span></div>' +
-        vv.map(function (i) {
-          return ideaCard(i, i.campeona ? '<span class="chip lv1">⭐ Única en carrera</span>' : '', i.pedi ?
-            '<span class="chip" style="background:#FFF3CF;color:#8A6200">⏳ Solicitud enviada</span><button class="btn sm ghost" data-a="cancelJoin" data-id="' + i.id + '">Cancelar</button>' :
-            '<button class="btn sm coral" data-a="requestJoin" data-id="' + i.id + '">🤝 Pedir unirme</button>');
-        }).join('');
-    }
-    if (!eqs.length && (isGuest() || !S.me.puedeUnirse) && !vivas().length) h += '<div class="panel empty"><div class="e-ico">🚦</div><b>No hay ideas en carrera todavía</b></div>';
+  if (!isGuest()) h += '<button class="btn ghost block" data-a="form" data-mode="draft" style="margin:4px 0 6px">📝 Escribir un borrador</button>';
+  if (borr.length) {
+    h += '<div class="sec-t"><h3>📝 Mis borradores</h3><span class="muted small">Solo tú los ves</span></div>' + borr.map(function (b) {
+      return '<div class="panel draft"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h4 style="font-size:17px;font-weight:900">' + esc(b.titulo) + '</h4>' + (b.padreId ? '<span class="chip">🔁 relanzamiento</span>' : '') + '</div>' +
+        '<div class="acts"><button class="btn sm ghost" data-a="form" data-mode="edit" data-id="' + b.id + '">✏️ Editar</button>' + (S.me.puedeLanzar ? '<button class="btn sm coral" data-a="publishDraft" data-id="' + b.id + '">🚀 Publicar</button>' : '') + '<button class="btn sm ghost" data-a="deleteDraft" data-id="' + b.id + '">🗑️</button></div></div>';
+    }).join('');
+  }
+  if (eqs.length) {
+    h += '<div class="sec-t" style="margin-top:4px"><h3>' + (eqs.length === 1 ? 'Tu idea en carrera' : 'Tus ' + eqs.length + ' ideas en carrera') + '</h3></div>' +
+      eqs.map(function (eq) {
+        var nota = eq.estado === 'pendiente' && ide ? '<div class="panel note alga-n">🧩 "' + esc(eq.titulo) + '" pasó a ' + NIV_NOM[eq.nivel] + '. Respondan las nuevas preguntas antes del ' + fecha(s.faseFin) + ' o pierden un intento.</div>' : '';
+        return nota + ideaCard(eq, eq.intentos ? '<span class="chip">🔁 intento ' + (eq.intentos + 1) + ' de ' + eq.intentosMax + '</span>' : '', ide ? editarBtn(eq) + '<button class="btn sm ghost" data-a="idea" data-id="' + eq.id + '">Ver ficha</button>' : '<button class="btn sm ghost" data-a="idea" data-id="' + eq.id + '">Ver ficha</button>') + (eq.soyFundador ? solicitudesHTML(eq) : '');
+      }).join('');
+  }
+  if (ide && !isGuest() && S.me.puedeUnirse) {
+    var ajenas = vivas().filter(function (i) { return i.nivel >= 2 && !i.enEquipo; });
+    if (ajenas.length) h += '<div class="sec-t"><h3>🤝 Súmate como socio</h3><span class="muted small">Ideas que ya pasaron de Chispa</span></div>' +
+      ajenas.map(function (i) {
+        return ideaCard(i, '', i.pedi ? '<span class="chip" style="background:#FFF3CF;color:#8A6200">⏳ Solicitud enviada</span><button class="btn sm ghost" data-a="cancelJoin" data-id="' + i.id + '">Cancelar</button>' : '<button class="btn sm coral" data-a="requestJoin" data-id="' + i.id + '">🤝 Pedir unirme</button>');
+      }).join('');
   }
   return h + '<button class="btn ghost block" data-a="rules" style="margin-top:14px">¿Cómo se juega?</button>' + miniRanking();
 }
@@ -950,8 +963,8 @@ function ideaCard(i, extra, actions) {
   var a = mem(i.autorId);
   var nq = (i.preguntas || []).filter(function (p) { return p.actual && !p.oculta; }).length;
   if (nq && !ideacion() && i.estado === 'lista') extra = (extra || '') + '<span class="chip qchip">💬 ' + nq + (nq === 1 ? ' pregunta' : ' preguntas') + '</span>';
-  var bar = (i.estado === 'lista' && !ideacion() && i.temporada === S.season.n) ? '<div class="vbar"><span style="width:' + Math.min(100, Math.round(100 * i.votos / Math.max(1, i.necesarios))) + '%"></span></div><div class="muted small" style="margin-top:4px">' + i.votos + ' ' + (i.votos === 1 ? 'voto' : 'votos') + ' de ' + i.necesarios + ' mínimos</div>' : '';
-  return '<div class="panel icard' + (i.campeona ? ' champ' : '') + '"><button class="ih" data-a="idea" data-id="' + i.id + '">' + avatarSVG(a.avatar, a.id) + '<div style="flex:1;min-width:0;text-align:left"><h4>' + esc(i.titulo) + '</h4><span class="muted small">' + ((i.socios || []).length ? 'Equipo de ' + esc(a.nombre) + ' · ' + (i.socios.length + 1) + ' integrantes' : esc(a.nombre)) + '</span></div></button>' +
+  var bar = (i.estado === 'lista' && !ideacion()) ? '<div class="vbar"><span style="width:' + Math.min(100, Math.round(100 * i.votos / Math.max(1, i.necesarios))) + '%"></span></div><div class="muted small" style="margin-top:4px">' + i.votos + ' ' + (i.votos === 1 ? 'voto' : 'votos') + ' de ' + i.necesarios + ' mínimos</div>' : '';
+  return '<div class="panel icard' + (i.estado === 'coronada' ? ' champ' : '') + '"><button class="ih" data-a="idea" data-id="' + i.id + '">' + avatarSVG(a.avatar, a.id) + '<div style="flex:1;min-width:0;text-align:left"><h4>' + esc(i.titulo) + '</h4><span class="muted small">' + ((i.socios || []).length ? 'Equipo de ' + esc(a.nombre) + ' · ' + (i.socios.length + 1) + ' integrantes' : esc(a.nombre)) + '</span></div></button>' +
     '<div class="meta"><span class="chip lv' + i.nivel + '">' + NIV_ICO[i.nivel] + ' ' + NIV_NOM[i.nivel] + '</span>' + (i.enEquipo ? '<span class="chip mine">🚩 Tu equipo</span>' : '') + (extra || '') + '</div>' + bar + (actions ? '<div class="acts">' + actions + '</div>' : '') + '</div>';
 }
 function inviteBtn() { return ''; }
@@ -959,57 +972,55 @@ function tabEvaluar() {
   var s = S.season;
   if (ideacion()) {
     var q = vivas();
-    return phaseBar() + '<div class="panel empty locked-p"><div class="e-ico">🔒</div><b>La evaluación abre el ' + fecha(s.faseFin) + '</b><p>Mientras dura la ideación, cada equipo puede seguir mejorando su idea. Cuando abra, todos evalúan las mismas versiones.</p></div>' +
+    return phaseBar() + '<div class="panel empty locked-p"><div class="e-ico">🔒</div><b>La evaluación abre el ' + fecha(s.faseFin) + '</b><p>Mientras dura la ideación, cada equipo mejora su idea. Cuando abra, todos evalúan las mismas versiones, cada una con los criterios de su fase.</p></div>' +
       '<div class="sec-t"><h3>En la parrilla</h3><span class="muted small">' + q.length + (q.length === 1 ? ' idea en carrera' : ' ideas en carrera') + '</span></div>' +
-      (q.length ? '<div class="panel grid">' + q.map(function (i) {
-        var a = mem(i.autorId);
-        return '<div class="row">' + avatarSVG(a.avatar, a.id) + '<div class="who"><b>' + esc(i.titulo) + '</b><span class="muted small">' + (i.estado === 'pendiente' ? '🧩 Preparando ' + NIV_NOM[i.nivel] : '✅ Lista') + ' · ' + esc(a.nombre) + ((i.socios || []).length ? ' + ' + i.socios.length : '') + '</span></div><span class="chip lv' + i.nivel + '">' + NIV_ICO[i.nivel] + ' ' + NIV_NOM[i.nivel] + '</span></div>';
-      }).join('') + '</div><p class="muted small" style="text-align:center">El contenido se revela cuando abra la evaluación.</p>' : '<div class="panel empty"><p>Todavía no hay ideas en carrera esta temporada.</p></div>') + inviteBtn();
+      (q.length ? lanesHTML(q, true) + '<p class="muted small" style="text-align:center">El contenido se revela cuando abra la evaluación.</p>' : '<div class="panel empty"><p>Todavía no hay ideas en carrera.</p></div>');
   }
   var p = pending(), voted = actuales().filter(function (i) { return i.votado && i.estado === 'lista'; });
-  var propias = actuales().filter(function (i) { return i.estado === 'lista' && i.enEquipo && S.season.vivas > 1; });
-  var html = phaseBar() + '<div class="sec-t" style="margin-top:4px"><h3>Esperan tus estrellas</h3><span class="muted small">Voto secreto</span></div>';
+  var propias = actuales().filter(function (i) { return i.estado === 'lista' && i.enEquipo && !i.puedeVotar && !i.votado; });
+  var html = phaseBar();
   if (!p.length) html += '<div class="panel empty"><div class="e-ico">✅</div><b>' + (voted.length ? '¡Evaluaste todo!' : 'Nada por evaluar') + '</b><p>' + (voted.length ? 'Los resultados se publican cuando cierre la evaluación, el ' + fecha(s.faseFin) + '.' : 'No hay ideas que puedas evaluar en esta fase.') + '</p></div>';
-  else html += p.map(function (i) { return ideaCard(i, i.campeona ? '<span class="chip lv1">⭐ Única en carrera</span>' : '', '<button class="btn sm coral" data-a="idea" data-id="' + i.id + '">⭐ Leer y evaluar</button><button class="btn sm ghost" data-a="copy" data-id="' + i.id + '">📋 Copiar para IA</button>'); }).join('');
+  [4, 3, 2, 1].forEach(function (n) {
+    var g = p.filter(function (i) { return i.nivel === n; });
+    if (!g.length) return;
+    html += '<div class="sec-t"><h3>' + NIV_ICO[n] + ' ' + NIV_NOM[n] + '</h3><span class="muted small">' + g.length + (g.length === 1 ? ' idea' : ' ideas') + ' · ' + S.criterios[n].length + ' criterios</span></div>' +
+      g.map(function (i) { return ideaCard(i, i.modoVoto === 'todos' && i.enEquipo ? '<span class="chip">🗳️ votan todos</span>' : '', '<button class="btn sm coral" data-a="idea" data-id="' + i.id + '">⭐ Leer y evaluar</button><button class="btn sm ghost" data-a="copy" data-id="' + i.id + '">📋 Copiar para IA</button>'); }).join('');
+  });
   if (voted.length) html += '<div class="sec-t"><h3>Ya votaste</h3><span class="muted small">Esperando el cierre</span></div>' + voted.map(function (i) { return ideaCard(i, '<span class="chip" style="background:#E9F7EF;color:#148A6B">✓ Tu voto está</span>', '<button class="btn sm ghost" data-a="copy" data-id="' + i.id + '">📋 Copiar para IA</button>'); }).join('');
-  if (propias.length) html += '<div class="sec-t"><h3>Tu equipo compite</h3><span class="muted small">No puedes votarte</span></div>' + propias.map(function (i) { return ideaCard(i, '', '<button class="btn sm ghost" data-a="idea" data-id="' + i.id + '">Ver preguntas</button>'); }).join('');
-  return html + inviteBtn();
+  if (propias.length) html += '<div class="sec-t"><h3>Tus equipos compiten</h3><span class="muted small">No puedes votarte</span></div>' + propias.map(function (i) { return ideaCard(i, '', '<button class="btn sm ghost" data-a="idea" data-id="' + i.id + '">Ver preguntas</button>'); }).join('');
+  return html;
 }
 
 // ---------- pestaña Torneo ----------
-function levelsHTML() {
-  var s = S.season, h = '<div class="lvls">';
-  for (var n = 1; n <= 4; n++) {
-    var c = n < s.nivel ? 'done' : n === s.nivel ? 'cur l' + n : '';
-    h += '<div class="lv ' + c + '"><span>' + (n < s.nivel ? '★' : NIV_ICO[n]) + '</span><small>' + NIV_NOM[n] + '</small></div>' + (n < 4 ? '<i class="' + (n < s.nivel ? 'done' : '') + '"></i>' : '');
-  }
+function lanesHTML(lista, compacto) {
+  var h = '<div class="carriles">';
+  [1, 2, 3, 4].forEach(function (n) {
+    var g = lista.filter(function (i) { return i.nivel === n; });
+    h += '<div class="carril l' + n + '"><div class="carril-h"><span>' + NIV_ICO[n] + '</span><b>' + NIV_NOM[n] + '</b><i>' + g.length + '</i></div>' +
+      (g.length ? g.map(function (i) {
+        var a = mem(i.autorId);
+        return '<button class="carril-i" data-a="idea" data-id="' + i.id + '">' + avatarSVG(a.avatar, a.id) + '<div><b>' + esc(i.titulo) + '</b><small>' + esc(a.nombre) + ((i.socios || []).length ? ' + ' + i.socios.length : '') + (i.estado === 'pendiente' ? ' · 🧩 preparando' : '') + (i.intentos ? ' · 🔁' + (i.intentos + 1) : '') + '</small></div>' + (i.enEquipo ? '<span class="carril-me">🚩</span>' : '') + '</button>';
+      }).join('') : '<div class="carril-empty">' + (n === 1 ? 'Sin ideas nuevas' : 'Nadie todavía') + '</div>') + '</div>';
+  });
   return h + '</div>';
 }
 function tabCarrera() {
-  var s = S.season, b = S.board, vv = vivas(), elim = actuales().filter(function (i) { return i.estado === 'eliminada'; });
-  var html = '<section class="season"><div class="srow"><div><span class="small" style="opacity:.8;font-weight:800">' + (ideacion() ? '💡 Ideación' : '⭐ Evaluación') + ' · ronda ' + s.ronda + '</span><h2>Temporada ' + s.n + '</h2></div><div class="dleft"><b>' + left(s.faseFin) + '</b>' + (ideacion() ? 'para evaluar' : 'para el cierre') + '</div></div>' +
-    levelsHTML() + (s.intento > 1 ? '<div class="champ">🔁 ' + NIV_NOM[s.nivel] + ' se está repitiendo: intento ' + s.intento + '</div>' : '') + '</section>';
-  html += '<div class="sec-t"><h3>' + (s.campeonaId ? '⭐ Única en carrera' : 'En carrera') + '</h3><span class="muted small">' + vv.length + (vv.length === 1 ? ' bandera' : ' banderas') + '</span></div>';
-  html += vv.length ? vv.map(function (i) { return '<div class="panel flag' + (i.campeona ? ' champ' : '') + '"><div class="fl-top"><b>' + esc(i.titulo) + '</b><span class="chip lv' + i.nivel + '">' + NIV_ICO[i.nivel] + ' ' + NIV_NOM[i.nivel] + '</span></div>' + teamHTML(i, true) + (Object.keys(i.estrellas || {}).length ? '<div class="small muted" style="margin-top:6px">' + Object.keys(i.estrellas).map(function (k) { return NIV_NOM[k] + ' ★ ' + Number(i.estrellas[k]).toFixed(1); }).join(' · ') + '</div>' : '') + '<div class="acts"><button class="btn sm ghost" data-a="idea" data-id="' + i.id + '">Ver ficha</button>' + (S.me.puedeUnirse && !i.pedi ? '<button class="btn sm coral" data-a="requestJoin" data-id="' + i.id + '">🤝 Pedir unirme</button>' : i.pedi ? '<span class="chip" style="background:#FFF3CF;color:#8A6200">⏳ Solicitud enviada</span>' : '') + '</div></div>'; }).join('') :
-    '<div class="panel empty"><div class="e-ico">🚦</div><b>La parrilla está vacía</b><p>' + (s.nivel === 1 ? 'Cada piloto entra a la temporada lanzando su idea en la pestaña Idear.' : '') + '</p></div>';
+  var s = S.season, b = S.board, vv = vivas();
+  var html = '<section class="season"><div class="srow"><div><span class="small" style="opacity:.8;font-weight:800">' + (ideacion() ? '💡 Ideación' : '⭐ Evaluación') + ' · temporada ' + s.n + '</span><h2>Gran Premio #' + s.ciclo + '</h2></div><div class="dleft"><b>' + left(s.faseFin) + '</b>' + (ideacion() ? 'para evaluar' : 'para el cierre') + '</div></div></section>';
+  html += '<div class="sec-t"><h3>La carrera</h3><span class="muted small">' + vv.length + (vv.length === 1 ? ' idea en carrera' : ' ideas en carrera') + '</span></div>' + lanesHTML(vv);
+  var elim = S.ideas.filter(function (i) { return i.estado === 'eliminada'; });
   if (elim.length) html += '<details class="lvl" style="margin-top:4px"><summary><span>🏳️ Quedaron fuera (' + elim.length + ')</span><span class="muted small">Ver</span></summary>' + elim.map(function (i) { return '<div class="row">' + av(i.autorId) + '<div class="who"><b>' + esc(i.titulo) + '</b><span class="muted small">' + esc(mem(i.autorId).nombre) + ' · fuera en ' + NIV_NOM[i.eliminadaEn] + (i.estrellas[i.eliminadaEn] != null ? ' con ★ ' + Number(i.estrellas[i.eliminadaEn]).toFixed(1) : '') + '</span></div></div>'; }).join('') + '</details>';
   html += '<div class="sec-t"><h3>Ranking de tiburones</h3><span class="muted small">Puntos acumulados de siempre</span></div>' +
-    '<p class="muted small" style="margin:-4px 4px 8px">Los puntos premian participar, votar y avanzar. No deciden el podio de ideas: ahí gana la mejor idea.</p><div class="panel grid">' +
+    '<p class="muted small" style="margin:-4px 4px 8px">Los puntos premian participar, votar y avanzar. No deciden las medallas: ahí gana la idea por su nota.</p><div class="panel grid">' +
     b.map(function (x, k) {
-      var eq = x.equipo ? findIdea(x.equipo) : null, r = rango(x.total);
+      var r = rango(x.total);
       return '<div class="row' + (k === 0 && x.total > 0 ? ' top1' : '') + (x.id === S.me.id ? ' me' : '') + '"><span class="pos">' + (k + 1) + '°</span>' + av(x.id) +
-        '<div class="who"><b>' + esc(mem(x.id).nombre) + '</b><span class="muted small">' + r.ico + ' ' + r.nom + (eq ? ' · 🚩 ' + esc(eq.titulo) : '') + '</span></div><div class="pts">' + x.total + '<small>+' + x.season + ' esta temp.</small></div></div>';
+        '<div class="who"><b>' + esc(mem(x.id).nombre) + '</b><span class="muted small">' + r.ico + ' ' + r.nom + (x.equipos ? ' · 🚩 ' + x.equipos + (x.equipos === 1 ? ' idea' : ' ideas') + ' en carrera' : '') + '</span></div><div class="pts">' + x.total + '<small>+' + x.season + ' esta temp.</small></div></div>';
     }).join('') + '</div>';
-  if (S.temporadas && S.temporadas.length) {
-    var MED = { oro: '🥇', plata: '🥈', bronce: '🥉' };
-    html += '<div class="sec-t"><h3>Salón de la fama</h3><span class="muted small">Campeonas de cada temporada</span></div>' +
-      S.temporadas.map(function (t) {
-        var pod = (t.podio && t.podio.length) ? t.podio : [{ titulo: t.titulo, fundadorId: t.fundadorId, socios: t.socios || [], promedio: t.promedio, medalla: t.medalla }];
-        return '<div class="panel hof"><b class="disp" style="font-size:18px">Temporada ' + t.n + '</b>' + pod.map(function (p) {
-          return '<div class="hrow"><span class="md">' + (MED[p.medalla] || '🏅') + '</span><div><b>' + esc(p.titulo) + '</b><span class="muted small">' + esc(mem(p.fundadorId).nombre) + (p.socios && p.socios.length ? ' con ' + p.socios.map(function (sid) { return esc(mem(sid).nombre); }).join(', ') : '') + ' · ★ ' + Number(p.promedio).toFixed(1) + '</span></div></div>';
-        }).join('') + '</div>';
-      }).join('');
-  }
+  var MED = { oro: '🥇', plata: '🥈', bronce: '🥉' };
+  var med = S.ideas.filter(function (i) { return i.estado === 'coronada'; }).sort(function (a, c) { return (c.actualizado || '') > (a.actualizado || '') ? 1 : -1; });
+  if (med.length) html += '<div class="sec-t"><h3>Salón de la fama</h3><span class="muted small">Ideas que superaron el Podio</span></div><div class="panel hof">' +
+    med.map(function (i) { return '<div class="hrow"><span class="md">' + (MED[i.medalla] || '🏅') + '</span><div><b>' + esc(i.titulo) + '</b><span class="muted small">' + esc(mem(i.autorId).nombre) + ((i.socios || []).length ? ' con ' + i.socios.map(function (sid) { return esc(mem(sid).nombre); }).join(', ') : '') + ' · ★ ' + Number(i.estrellas[4] || 0).toFixed(1) + ' · temporada ' + (i.coronadaEn || 1) + '</span></div></div>'; }).join('') + '</div>';
   return html;
 }
 
@@ -1036,15 +1047,17 @@ function pathHTML(i) {
   return h + '</div><div class="path-sp"></div>';
 }
 function estadoTxt(i) {
-  var ide = ideacion(), actual = i.temporada === S.season.n, MED = { oro: '🥇 oro', plata: '🥈 plata', bronce: '🥉 bronce' };
-  if (i.estado === 'coronada') return '🏆 Campeona de la temporada ' + i.temporada + ' con medalla de ' + (MED[i.medalla] || '');
-  if (i.estado === 'eliminada') return '🏳️ Quedó fuera en ' + NIV_NOM[i.eliminadaEn] + (actual ? '' : ' (temporada ' + i.temporada + ')');
-  if (!actual) return 'Temporada ' + i.temporada;
-  if (i.estado === 'pendiente') return i.enEquipo ? (ide ? '🧩 ¡Pasó a ' + NIV_NOM[i.nivel] + '! Completen las nuevas preguntas' : '🧩 No completaron ' + NIV_NOM[i.nivel] + ' a tiempo para esta evaluación') : '🧩 Pasó a ' + NIV_NOM[i.nivel] + ': el equipo prepara sus respuestas';
-  if (i.estado === 'lista') return ide ? (i.enEquipo ? '✏️ Lista. Pueden editarla hasta el ' + fecha(S.season.faseFin) : '⏳ En carrera: se revela cuando abra la evaluación') : '🔒 En evaluación: ' + i.votos + ' de ' + i.necesarios + ' votos mínimos';
+  var ide = ideacion(), MED = { oro: '🥇 oro', plata: '🥈 plata', bronce: '🥉 bronce' };
+  if (i.estado === 'borrador') return '📝 Borrador privado: solo tú lo ves';
+  if (i.estado === 'coronada') return '🏆 Superó el Podio con medalla de ' + (MED[i.medalla] || '');
+  if (i.estado === 'eliminada') return '🏳️ Quedó fuera en ' + NIV_NOM[i.eliminadaEn] + (i.puedeRelanzar ? '. Puedes relanzarla mejorada.' : '');
+  if (i.estado === 'pendiente') return i.enEquipo ? (ide ? '🧩 Pasó a ' + NIV_NOM[i.nivel] + ': completen las nuevas preguntas' : '🧩 No completaron ' + NIV_NOM[i.nivel] + ' a tiempo: pierden un intento') + intentoTxt(i) : '🧩 Pasó a ' + NIV_NOM[i.nivel] + ': el equipo prepara sus respuestas';
+  if (i.estado === 'lista') return (ide ? (i.enEquipo ? '✏️ Lista. Pueden editarla hasta el ' + fecha(S.season.faseFin) : '⏳ En carrera: se revela cuando abra la evaluación') : '🔒 En evaluación: ' + i.votos + ' de ' + i.necesarios + ' votos mínimos') + intentoTxt(i);
   return '';
 }
 function teamActions(i) {
+  if (i.estado === 'borrador') return '<button class="btn sm ghost" data-a="form" data-mode="edit" data-id="' + i.id + '">✏️ Editar</button>' + (S.me.puedeLanzar ? '<button class="btn sm coral" data-a="publishDraft" data-id="' + i.id + '">🚀 Publicar</button>' : '');
+  if (i.puedeRelanzar) return '<button class="btn sm coral" data-a="relanzar" data-id="' + i.id + '">🔁 Relanzar mejorada</button>';
   if (!i.puedeEditar) return '';
   return '<button class="btn sm ' + (i.estado === 'pendiente' ? 'alga' : 'ghost') + '" data-a="form" data-mode="edit" data-id="' + i.id + '">' + (i.estado === 'pendiente' ? 'Completar ' + NIV_NOM[i.nivel] : '✏️ Editar') + '</button>';
 }
@@ -1053,15 +1066,15 @@ function tabMis() {
   if (eqs.length) {
     h += '<div class="sec-t" style="margin-top:4px"><h3>' + (eqs.length === 1 ? (eqs[0].soyFundador ? 'Tu equipo' : 'Eres socio de') : 'Tus ' + eqs.length + ' equipos') + '</h3></div>' +
       eqs.map(function (eq) {
-        return '<div class="panel' + (eq.campeona ? ' champ' : '') + '"><h4 style="font-size:18px;font-weight:900">' + esc(eq.titulo) + (eq.soyFundador ? '' : ' <span class="chip">socio</span>') + '</h4>' + teamHTML(eq, true) + pathHTML(eq) + '<p class="small" style="font-weight:800">' + estadoTxt(eq) + '</p><div class="acts"><button class="btn sm ghost" data-a="idea" data-id="' + eq.id + '">Ver ficha</button>' + teamActions(eq) + (eq.sinResponder ? '<button class="btn sm coral" data-a="idea" data-id="' + eq.id + '">❓ Responder (' + eq.sinResponder + ')</button>' : '') + '</div></div>' + solicitudesHTML(eq);
+        return '<div class="panel"><h4 style="font-size:18px;font-weight:900">' + esc(eq.titulo) + (eq.soyFundador ? '' : ' <span class="chip">socio</span>') + '</h4>' + teamHTML(eq, true) + pathHTML(eq) + '<p class="small" style="font-weight:800">' + estadoTxt(eq) + '</p><div class="acts"><button class="btn sm ghost" data-a="idea" data-id="' + eq.id + '">Ver ficha</button>' + teamActions(eq) + (eq.sinResponder ? '<button class="btn sm coral" data-a="idea" data-id="' + eq.id + '">❓ Responder (' + eq.sinResponder + ')</button>' : '') + '</div></div>' + (eq.soyFundador ? solicitudesHTML(eq) : '');
       }).join('');
   } else if (!isGuest()) {
-    h += '<div class="panel empty"><div class="e-ico">🚩</div><b>No estás en ningún equipo en carrera</b><p>' + (S.season.nivel === 1 ? 'Lanza una idea en la pestaña Idear para entrar a la temporada.' : 'Puedes sumarte como socio a una de las ideas que siguen en carrera.') + '</p>' + (S.me.puedeUnirse ? '<button class="btn coral" data-a="tab" data-t="idear">🤝 Buscar equipo</button>' : '') + '</div>';
+    h += '<div class="panel empty"><div class="e-ico">🚩</div><b>No estás en ninguna idea en carrera</b><p>Publica una idea en la pestaña Idear o súmate como socio a una que ya pasó de Chispa.</p><button class="btn coral" data-a="tab" data-t="idear">💡 Ir a Idear</button></div>';
   }
-  var idsVivos = eqs.map(function (e) { return e.id; });
-  var mias = S.ideas.filter(function (i) { return i.autorId === S.me.id && idsVivos.indexOf(i.id) < 0; }).sort(function (a, b) { return (b.actualizado || '') > (a.actualizado || '') ? 1 : -1; });
+  var ids = eqs.map(function (e) { return e.id; });
+  var mias = S.ideas.filter(function (i) { return i.autorId === S.me.id && ids.indexOf(i.id) < 0 && i.estado !== 'borrador'; }).sort(function (a, b) { return (b.actualizado || '') > (a.actualizado || '') ? 1 : -1; });
   if (mias.length) h += '<div class="sec-t"><h3>Mis otras ideas</h3><span class="muted small">Todas quedan guardadas</span></div>' + mias.map(function (i) {
-    return '<div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><h4 style="font-size:17px;font-weight:900">' + esc(i.titulo) + '</h4><span class="chip">T' + i.temporada + '</span></div>' + pathHTML(i) + '<p class="small" style="font-weight:800">' + estadoTxt(i) + '</p><div class="acts"><button class="btn sm ghost" data-a="idea" data-id="' + i.id + '">Ver ficha y consejos</button></div></div>';
+    return '<div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><h4 style="font-size:17px;font-weight:900">' + esc(i.titulo) + '</h4><span class="chip">T' + i.temporada + '</span></div>' + pathHTML(i) + '<p class="small" style="font-weight:800">' + estadoTxt(i) + '</p><div class="acts"><button class="btn sm ghost" data-a="idea" data-id="' + i.id + '">Ver ficha y consejos</button>' + teamActions(i) + '</div></div>';
   }).join('');
   return h;
 }
@@ -1095,7 +1108,7 @@ function openIdea(id) {
       '<p class="secret">🔒 Tu voto es secreto. Para pasar de fase se necesitan ' + S.cfg.threshold + ' ⭐.' + (i.nivel >= 2 ? (i.nivel === 4 ? ' En el Podio, si vota el Tiburón Invitado, su nota es la que decide.' : ' Desde Semilla, la nota combina 50% familia y 50% Tiburón Invitado.') : '') + '</p><button class="btn coral block" id="sendV" data-a="sendVote" disabled>Enviar mis estrellas</button>';
   } else if (i.votado) html += '<p class="panel small" style="font-weight:800">✓ Ya evaluaste esta idea. Gracias, tiburón.</p>';
   var act = teamActions(i);
-  if (S.me.puedeUnirse && (i.estado === 'lista' || i.estado === 'pendiente') && i.temporada === S.season.n && !i.enEquipo) act += i.pedi ? '<button class="btn ghost" data-a="cancelJoin" data-id="' + i.id + '">Cancelar solicitud</button>' : '<button class="btn coral" data-a="requestJoin" data-id="' + i.id + '">🤝 Pedir unirme a este equipo</button>';
+  if (S.me.puedeUnirse && i.nivel >= 2 && (i.estado === 'lista' || i.estado === 'pendiente') && !i.enEquipo) act += i.pedi ? '<button class="btn ghost" data-a="cancelJoin" data-id="' + i.id + '">Cancelar solicitud</button>' : '<button class="btn coral" data-a="requestJoin" data-id="' + i.id + '">🤝 Pedir unirme a este equipo</button>';
   if (act) html += '<div class="acts">' + act.replace(/btn sm/g, 'btn') + '</div>';
   sheet(esc(i.titulo), html);
   VIEW = i.id;
@@ -1129,7 +1142,7 @@ function qCard(i, p) {
 }
 function preguntasHTML(i) {
   var ps = i.preguntas || [], cur = ps.filter(function (p) { return p.actual; }), old = ps.filter(function (p) { return !p.actual; });
-  var enEval = !ideacion() && i.estado === 'lista' && i.temporada === S.season.n, h = '';
+  var enEval = !ideacion() && i.estado === 'lista', h = '';
   var cerro = S.season.cierrePreguntas && Date.now() >= new Date(S.season.cierrePreguntas);
   if (!cur.length && !old.length && !i.puedePreguntar) {
     if (enEval && !i.enEquipo && cerro) return '<p class="muted small" style="margin:0 0 14px">💬 Las preguntas cerraron el ' + fecha(S.season.cierrePreguntas) + ', para que el equipo alcance a responder.</p>';
@@ -1194,40 +1207,52 @@ function shareIdea(id) { var i = findIdea(id); navigator.share({ title: i.titulo
 
 // ===================== FORMULARIO (nueva o editar) =====================
 function openForm(mode, id) {
-  if (!ideacion()) return toast('Ahora es fase de evaluación. Podrás idear y editar en la próxima ideación.', true);
-  var i = id ? findIdea(id) : null, lvl = i ? i.nivel : 1;
-  var key = 'tec_draft_' + S.me.id + '_' + (id || 'new') + '_' + lvl;
+  var i = id ? findIdea(id) : null, esBorr = mode === 'draft' || (i && i.estado === 'borrador');
+  if (!esBorr && !ideacion()) return toast('Ahora es fase de evaluación. Puedes escribir un borrador y publicarlo en la próxima ideación.', true);
+  var lvl = i ? i.nivel : 1;
+  var key = 'tec_draft_' + S.me.id + '_' + (id || mode) + '_' + lvl;
   var base = i && i.respuestas[lvl] ? Object.assign({ titulo: i.titulo }, i.respuestas[lvl]) : (i ? { titulo: i.titulo } : {});
   var dr = LS.get(key, null) || base;
-  var html = '<div class="lvl-head"><span class="chip lv' + lvl + '" style="font-size:15px">' + NIV_ICO[lvl] + ' Nivel ' + lvl + ': ' + NIV_NOM[lvl] + '</span>' + (mode === 'edit' ? '<span class="chip" style="background:#fff;color:var(--oceano)">✏️ ' + (i.estado === 'pendiente' ? 'Completando' : 'Editando') + '</span>' : '') + '</div>';
+  var html = '<div class="lvl-head"><span class="chip lv' + lvl + '" style="font-size:15px">' + NIV_ICO[lvl] + ' Nivel ' + lvl + ': ' + NIV_NOM[lvl] + '</span>' + (esBorr ? '<span class="chip" style="background:#fff;color:var(--uva)">📝 Borrador privado</span>' : mode === 'edit' ? '<span class="chip" style="background:#fff;color:var(--oceano)">✏️ ' + (i.estado === 'pendiente' ? 'Completando' : 'Editando') + '</span>' : '') + '</div>';
+  if (esBorr) html += '<div class="panel note">📝 Un borrador solo lo ves tú y puedes dejarlo incompleto. Para publicarlo necesita las ' + PREGUNTAS[1].length + ' respuestas.</div>';
+  if (i && i.padreId && i.consejosPadre && i.consejosPadre.length) html += '<div class="panel tips"><h3>💡 Consejos que recibió la versión anterior</h3>' + i.consejosPadre.map(function (c) { return '<div class="tip">“' + esc(c.texto) + '”</div>'; }).join('') + '</div>';
   if (i && lvl > 1) html += '<p class="muted small" style="margin-bottom:8px">Lo que respondieron en fases anteriores:</p>' + answersHTML(i, lvl - 1, false);
-  if (i && lvl === 1 && S.season.intento > 1) html += '<div class="panel note">🔁 Puedes mejorar tu idea o cambiarla por completo: nombre, enfoque y respuestas.</div>';
   html += '<div class="field"><label for="fT">Nombre de la idea</label><div class="hint">🦈 Corto y fácil de recordar, como el nombre de una marca.</div><input class="in" id="fT" maxlength="80" data-k="titulo" value="' + esc(dr.titulo || '') + '" placeholder="Ej: Lavado de autos a domicilio"></div>';
   html += PREGUNTAS[lvl].map(function (q, k) {
     return '<div class="field"><label for="fq' + k + '">' + esc(q.q) + '</label><div class="hint">🦈 ' + esc(q.h) + '</div><textarea class="in" id="fq' + k + '" data-k="q' + k + '" placeholder="' + esc(q.ph) + '">' + esc(dr['q' + k] || '') + '</textarea></div>';
   }).join('');
-  var label = mode === 'new' ? 'Lanzar idea (+' + S.puntosRegla.idea + ' pts)' : i.estado === 'pendiente' ? (lvl === 4 ? 'Presentar a los tiburones' : 'Dejar lista para evaluar') : 'Guardar cambios';
-  html += '<button class="btn coral block" data-a="submitForm" data-mode="' + mode + '" data-id="' + (id || '') + '" data-key="' + key + '">' + label + '</button>' +
-    '<p class="muted small" style="text-align:center;margin-top:10px">Se puede editar hasta el ' + fecha(S.season.faseFin) + '. El borrador se guarda solo mientras escribes.</p>' +
+  var btns = '';
+  if (mode === 'new') btns = '<button class="btn coral block" data-a="submitForm" data-mode="new" data-key="' + key + '">🚀 Publicar en este Gran Premio</button><button class="btn ghost block" data-a="submitForm" data-mode="draft" data-key="' + key + '" style="margin-top:8px">📝 Guardar como borrador</button>';
+  else if (mode === 'draft') btns = '<button class="btn coral block" data-a="submitForm" data-mode="draft" data-key="' + key + '">📝 Guardar borrador</button>';
+  else if (esBorr) btns = '<button class="btn ghost block" data-a="submitForm" data-mode="saveDraft" data-id="' + id + '" data-key="' + key + '">📝 Guardar borrador</button>' + (S.me.puedeLanzar ? '<button class="btn coral block" data-a="submitForm" data-mode="publish" data-id="' + id + '" data-key="' + key + '" style="margin-top:8px">🚀 Guardar y publicar</button>' : '<p class="muted small" style="text-align:center;margin-top:8px">' + (ideacion() ? 'Ya usaste tu publicación de este Gran Premio.' : 'Podrás publicarlo cuando abra la próxima ideación.') + '</p>');
+  else btns = '<button class="btn coral block" data-a="submitForm" data-mode="edit" data-id="' + id + '" data-key="' + key + '">' + (i.estado === 'pendiente' ? (lvl === 4 ? 'Presentar a los tiburones' : 'Dejar lista para evaluar') : 'Guardar cambios') + '</button>';
+  html += btns + '<p class="muted small" style="text-align:center;margin-top:10px">' + (esBorr || mode === 'new' ? 'Lo que escribes se guarda solo en este teléfono mientras escribes.' : 'Se puede editar hasta el ' + fecha(S.season.faseFin) + '.') + '</p>' +
     '<button class="own" data-a="policy">🛡️ Esta idea queda registrada a nombre de su fundador y sus socios.</button>';
-  var v = sheet(mode === 'new' ? 'Nueva idea' : esc(i.titulo), html);
+  var v = sheet(mode === 'new' ? 'Nueva idea' : mode === 'draft' ? 'Nuevo borrador' : esc(i.titulo), html);
   v.addEventListener('input', function () { LS.set(key, collect()); });
 }
 function collect() { var o = {}; document.querySelectorAll('#shBody [data-k]').forEach(function (e) { o[e.dataset.k] = e.value; }); return o; }
 function submitForm(btn) {
   var d = collect(), mode = btn.dataset.mode, id = btn.dataset.id, resp = {};
   Object.keys(d).forEach(function (k) { if (k !== 'titulo') resp[k] = d[k]; });
-  var missing = Object.keys(resp).filter(function (k) { return (resp[k] || '').trim().length < 2; });
   if (!(d.titulo || '').trim()) return toast('Ponle un nombre a la idea', true);
-  if (missing.length) { toast('Te falta responder ' + missing.length + (missing.length === 1 ? ' pregunta' : ' preguntas'), true); var el = document.querySelector('[data-k="' + missing[0] + '"]'); if (el) el.focus(); return; }
+  var necesitaCompleto = mode === 'new' || mode === 'edit' || mode === 'publish';
+  var missing = Object.keys(resp).filter(function (k) { return (resp[k] || '').trim().length < 2; });
+  if (necesitaCompleto && missing.length) { toast('Te falta responder ' + missing.length + (missing.length === 1 ? ' pregunta' : ' preguntas') + (mode === 'new' ? '. Si aún no está lista, guárdala como borrador.' : ''), true); var el = document.querySelector('[data-k="' + missing[0] + '"]'); if (el) el.focus(); return; }
   busy(btn, true);
-  var call = mode === 'new' ? api('createIdea', { titulo: d.titulo, respuestas: resp }) : api('editIdea', { ideaId: id, titulo: d.titulo, respuestas: resp });
+  var call;
+  if (mode === 'new') call = api('createIdea', { titulo: d.titulo, respuestas: resp });
+  else if (mode === 'draft') call = api('createIdea', { titulo: d.titulo, respuestas: resp, borrador: true });
+  else if (mode === 'saveDraft') call = api('editIdea', { ideaId: id, titulo: d.titulo, respuestas: resp });
+  else if (mode === 'publish') call = api('editIdea', { ideaId: id, titulo: d.titulo, respuestas: resp }).then(function (r) { return r.ok ? api('publishDraft', { ideaId: id }) : r; });
+  else call = api('editIdea', { ideaId: id, titulo: d.titulo, respuestas: resp });
   call.then(function (r) {
     busy(btn, false); if (!r.ok) return toast(r.error, true);
     LS.del(btn.dataset.key); closeSheet();
-    if (mode === 'new') { confetti(50); toast('💡 ¡Estás en la pista! +' + S.puntosRegla.idea + ' puntos. Puedes editarla hasta que abra la evaluación.'); }
+    if (mode === 'new' || mode === 'publish') { confetti(50); toast('💡 ¡Estás en la pista! Ganas ' + S.puntosRegla.idea + ' puntos cuando se evalúe.'); }
+    else if (mode === 'draft' || mode === 'saveDraft') toast('📝 Borrador guardado. Solo tú lo ves.');
     else toast('✅ Guardado. Queda lista para la evaluación.');
-    TAB = 'mis'; LS.set('tec_tab', TAB); after(r);
+    TAB = (mode === 'draft' || mode === 'saveDraft') ? 'idear' : 'mis'; LS.set('tec_tab', TAB); after(r);
   });
 }
 function joinAct(action, payload, btn, okMsg) {
@@ -1289,7 +1314,7 @@ function openMenu() {
 var TOUR = [
   ['💡', 'Lanza tu idea', 'Cada piloto entra a la temporada con una idea. Solo respondes {N} preguntas cortas.'],
   ['⭐', 'La familia vota', 'Todos le dan estrellas a las ideas de los demás. Si una idea junta {U} estrellas o más, pasa a la siguiente fase.'],
-  ['🔁', '¿Nadie pasó?', 'No pasa nada: se repite la fase. Mejoras tu idea, o la cambias, y se vota otra vez.'],
+  ['🔁', '¿No alcanzó?', 'Cada idea tiene 2 intentos por fase. Si cae, la relanzas mejorada con los consejos que recibió.'],
   ['🤝', 'Si tu idea sale, tú sigues', 'Te unes como socio a una idea que sigue en carrera y la ayudas a ganar.'],
   ['🏆', 'Gana la mejor idea', 'Las que llegan al Podio las juzga un experto invitado. Tú, además, sumas puntos para subir de rango: de 🐟 Pez payaso a 🌊 Megalodón.']
 ];
@@ -1311,14 +1336,15 @@ function tourEnd() { closeSheet(); var f = showTour._done; showTour._done = null
 function openRules() {
   var U = S.cfg.threshold, s = S.season;
   sheet('Cómo se juega', '<div class="rules">' +
-    '<div class="rl"><span>🏁</span><div><b>La temporada</b>Es un torneo. Todos parten de cero y termina cuando una idea gana el Podio. Después empieza otra temporada con ideas nuevas.</div></div>' +
+    '<div class="rl"><span>🏁</span><div><b>Grandes Premios</b>El juego avanza en Grandes Premios: unos días para idear y otros para votar. En cada uno se votan todas las ideas, cada una en su propia fase.</div></div>' +
+    '<div class="rl"><span>💡</span><div><b>Chispa siempre abierta</b>En cada Gran Premio puedes publicar ' + (s.maxPorCiclo || 1) + (s.maxPorCiclo > 1 ? ' ideas nuevas' : ' idea nueva') + '. Si tienes más, guárdalas como borrador para el próximo.</div></div>' +
     '<div class="rl"><span>🪜</span><div><b>Las 4 fases</b>✨ Chispa → 🌱 Semilla → 🚀 Proyecto → 🏆 Podio. En cada fase las preguntas son un poco más difíciles.</div></div>' +
     '<div class="rl"><span>⏱️</span><div><b>Cada fase tiene 2 partes</b>💡 <b>Idear</b> (' + s.ideaDays + ' días): escribes y puedes cambiar todo lo que quieras.<br>⭐ <b>Votar</b> (' + s.evalDays + ' días): nadie edita, todos votan.</div></div>' +
-    '<div class="rl"><span>⭐</span><div><b>Para pasar de fase</b>Tu idea necesita ' + U + ' estrellas o más. Pasan todas las que lo logren. Si ninguna lo logra, se repite la fase.</div></div>' +
+    '<div class="rl"><span>⭐</span><div><b>Para pasar de fase</b>Tu idea necesita ' + U + ' estrellas o más. Tiene ' + (s.intentosMax || 2) + ' intentos por fase; si no lo logra, queda fuera y puedes relanzarla mejorada.</div></div>' +
     '<div class="rl"><span>🙅</span><div><b>Votos justos</b>Tu voto es secreto y nunca votas la idea de tu propio equipo.</div></div>' +
     '<div class="rl"><span>🤝</span><div><b>Equipos</b>Si tu idea queda fuera, pides unirte a una que siga en carrera. Su fundador te acepta y pasas a ser socio.</div></div>' +
     '<div class="rl"><span>💬</span><div><b>Preguntas</b>Mientras se vota, puedes hacer 1 pregunta a cada equipo. Y al votar puedes dejar un consejo secreto.</div></div>' +
-    '<div class="rl"><span>🏆</span><div><b>El Podio</b>Lo decide el Tiburón Invitado, un experto. La mejor idea gana 🥇, la segunda 🥈 y la tercera 🥉.</div></div>' +
+    '<div class="rl"><span>🏆</span><div><b>El Podio</b>Lo decide el Tiburón Invitado, un experto. Cada idea que lo supera gana su medalla según su nota: 🥇 desde 4,5, 🥈 desde 4,0 y 🥉 desde ' + U + '.</div></div>' +
     '<div class="rl"><span>🐟</span><div><b>Tus puntos</b>Lanzar idea +' + S.puntosRegla.idea + ', votar +' + S.puntosRegla.voto + '. Pasar de fase y ganar medallas suman más. Se acumulan para siempre y te suben de rango: 🐟 → 🐡 → 🐬 → 🦈 → Gran Tiburón Blanco → 🌊 Megalodón. No deciden el Podio.</div></div>' +
     '</div><button class="btn ghost block" data-a="tour" style="margin-top:6px">▶️ Ver la presentación corta</button>');
 }
@@ -1414,9 +1440,9 @@ function renderAdminPage() {
   var html =
     '<header class="top adm"><div class="netbar" id="netbar"></div><div class="brand">' + avatarSVG({ s: '#5B8DEF', k: '#FF4D4D', n: 1, a: '🎩' }) + '<b>Panel<span class="brk"> del administrador</span></b></div>' +
     '<a class="btn sm ghost" href="' + esc(linkJugadores()) + '" target="_blank" rel="noopener">🏁 App de jugadores</a><button class="ibtn" data-a="logout" aria-label="Salir">🚪</button></header><main>' +
-    '<div class="panel adm-season"><div class="srow2"><div><h3>Temporada ' + s.n + ' · ' + NIV_ICO[s.nivel] + ' ' + NIV_NOM[s.nivel] + (s.intento > 1 ? ' (intento ' + s.intento + ')' : '') + '</h3><p style="margin:4px 0 0">' + (ide ? '💡 <b>Ideación</b>: la evaluación abre sola el ' + fecha(s.faseFin) + '.' : '⭐ <b>Evaluación</b>: cierra sola el ' + fecha(s.faseFin) + '.') + '</p></div></div>' +
+    '<div class="panel adm-season"><div class="srow2"><div><h3>Gran Premio #' + s.ciclo + ' · temporada ' + s.n + '</h3><p style="margin:4px 0 0">' + (ide ? '💡 <b>Ideación</b>: la evaluación abre sola el ' + fecha(s.faseFin) + '.' : '⭐ <b>Evaluación</b>: cierra sola el ' + fecha(s.faseFin) + '.') + '</p></div></div>' +
     '<div class="kpis"><div><b>' + vv.length + '</b>en carrera</div><div><b>' + lista + '</b>listas</div><div><b>' + r.members.filter(function (m) { return m.activo && m.rol !== 'invitado'; }).length + '</b>pilotos</div><div><b>' + r.members.filter(function (m) { return m.activo && m.rol === 'invitado'; }).length + '</b>tiburones</div></div>' +
-    '<button class="btn ' + (ide ? 'sol' : 'coral') + ' block" data-a="phaseNow">' + (ide ? '⭐ Abrir la evaluación de ' + NIV_NOM[s.nivel] + ' ahora' : '🏁 Cerrar la evaluación y publicar resultados') + '</button></div>' +
+    '<button class="btn ' + (ide ? 'sol' : 'coral') + ' block" data-a="phaseNow">' + (ide ? '⭐ Abrir la evaluación ahora' : '🏁 Cerrar la evaluación y publicar resultados') + '</button></div>' +
     (nuevos.length ? '<div class="panel nuevos"><h3 style="margin-bottom:4px">🆕 Pilotos nuevos por revisar (' + nuevos.length + ')</h3><p class="muted small" style="margin-bottom:6px">Se registraron solos como Jugador ×1. Revisa su peso de voto y su rol, y guarda para marcarlos como revisados.</p>' + nuevos.map(fila).join('') + '</div>' : '') +
     '<div class="panel"><h3 style="margin-bottom:6px">Invitar</h3><p class="muted small" style="margin-bottom:10px">Cualquiera con el link puede crear su piloto. Tú después ajustas su peso y rol aquí.</p>' +
     '<div class="two"><button class="btn sm" data-a="invGeneral">📨 Invitación a la familia</button><button class="btn sm" data-a="invite" style="background:var(--uva);border-color:var(--uva-d)">🦈 Tiburón Invitado</button></div></div>' +
@@ -1434,6 +1460,8 @@ function renderAdminPage() {
     '<div class="panel"><h3 style="margin-bottom:10px">Reglas del juego</h3>' +
     '<div class="two"><div class="field"><label for="cI">Días de ideación</label><input class="in" id="cI" type="number" min="1" value="' + c.ideaDays + '"></div><div class="field"><label for="cE">Días de evaluación</label><input class="in" id="cE" type="number" min="1" value="' + c.evalDays + '"></div></div>' +
     '<p class="muted small" style="margin:-6px 0 12px">Los cambios de días se aplican desde la próxima fase.</p>' +
+    '<div class="two"><div class="field"><label for="cX">Ideas nuevas por persona en cada Gran Premio</label><input class="in" id="cX" type="number" min="1" max="10" value="' + (c.maxPorCiclo || 1) + '"></div><div class="field"><label for="cN">Intentos por fase</label><input class="in" id="cN" type="number" min="1" max="5" value="' + (c.intentosMax || 2) + '"></div></div>' +
+    '<div class="field"><label for="cD">Días por temporada del ranking</label><input class="in" id="cD" type="number" min="7" value="' + (c.temporadaDias || 90) + '"><div class="muted small">Solo reinicia el ranking de puntos de la temporada. Las ideas siguen en carrera.</div></div>' +
     '<div class="field"><label for="cT">Estrellas mínimas para pasar de fase</label><input class="in" id="cT" type="number" step="0.1" min="1" max="5" value="' + c.threshold + '"></div>' +
     '<div class="field"><label style="font-weight:700"><input type="checkbox" id="cM"' + (c.mailNuevas ? ' checked' : '') + '> Avisar por correo cada idea nueva</label><div class="muted small">Los correos importantes (evaluación, recordatorios, resultados) siempre se envían.</div></div>' +
     '<div class="field"><label for="cU">Link de la app de jugadores</label><input class="in" id="cU" value="' + esc(c.appUrl) + '" placeholder="https://tuusuario.github.io/tiburones-en-casa/"><div class="muted small">Es el que va en los correos y en las invitaciones.</div></div>' +
@@ -1468,7 +1496,7 @@ function admSave(btn) {
 }
 function cfgSave(btn) {
   busy(btn, true);
-  api('saveConfig', { cfg: { ideaDays: document.getElementById('cI').value, evalDays: document.getElementById('cE').value, threshold: document.getElementById('cT').value, mailNuevas: document.getElementById('cM').checked, appUrl: document.getElementById('cU').value } }).then(function (r) {
+  api('saveConfig', { cfg: { maxPorCiclo: document.getElementById('cX').value, intentosMax: document.getElementById('cN').value, temporadaDias: document.getElementById('cD').value, ideaDays: document.getElementById('cI').value, evalDays: document.getElementById('cE').value, threshold: document.getElementById('cT').value, mailNuevas: document.getElementById('cM').checked, appUrl: document.getElementById('cU').value } }).then(function (r) {
     busy(btn, false); if (!r.ok) return toast(r.error, true); toast('✅ Reglas guardadas'); after(r);
   });
 }
@@ -1479,7 +1507,7 @@ function phaseNow(btn) {
   api('phaseNow').then(function (r) {
     busy(btn, false); if (!r.ok) return toast(r.error, true);
     var antesT = S.season.n;
-    closeSheet(); toast(r.fase === 'evaluacion' ? '⭐ ¡Abrió la evaluación!' : (r.temporada > antesT ? '🏆 ¡Terminó la temporada! Arrancó la ' + r.temporada : '🏁 Resultados publicados. Ahora estamos en ' + NIV_NOM[r.nivel]));
+    closeSheet(); toast(r.fase === 'evaluacion' ? '⭐ ¡Abrió la evaluación del Gran Premio #' + r.ciclo + '!' : '🏁 Resultados publicados. Arrancó el Gran Premio #' + r.ciclo + (r.temporada > antesT ? ' y la temporada ' + r.temporada + ' del ranking' : ''));
     if (r.fase !== 'evaluacion') confetti(90);
     LS.del('tec_intro_' + S.me.id + '_' + new Date().toDateString());
     after(r).then(function () { if (MODO !== 'admin') showIntro(true).then(welcome); });
@@ -1512,7 +1540,7 @@ function showIntro(force) {
       b.forEach(function (x, k) { rank[x.id] = k; });
       var lanes = b.slice().sort(function (x, y) { return mem(x.id).nombre.localeCompare(mem(y.id).nombre); });
       var T = {
-        salida: ['Temporada ' + s.n, '¡Luces rojas… y a idear!'],
+        salida: ['Gran Premio #' + s.ciclo, '¡Luces rojas… y a idear!'],
         carrera: ['¡A toda máquina!', 'Quedan ' + left(s.faseFin) + ' de ideación'],
         final: ['¡Recta final!', 'Los tiburones están evaluando'],
         podio: ['¡Último día!', 'Así va el podio de la temporada ' + s.n]
@@ -1572,7 +1600,7 @@ function welcome() {
   var ide = ideacion(), p = pending().length, eqs = misEquipos(), lines = [];
   if (isGuest()) lines.push('Eres <strong>Tiburón Invitado</strong> de esta familia');
   else { var r = rango(miTotal()); lines.push(r.ico + ' <strong>' + r.nom + '</strong> · ' + miTotal() + ' pts' + (r.sig ? ' (te faltan ' + r.falta + ' para ' + r.sig + ')' : '')); }
-  lines.push((ide ? '💡 <strong>Ideación de ' : '⭐ <strong>Evaluación de ') + NIV_NOM[S.season.nivel] + '</strong>: quedan ' + left(S.season.faseFin));
+  lines.push((ide ? '💡 <strong>Ideación del Gran Premio #' : '⭐ <strong>Evaluación del Gran Premio #') + S.season.ciclo + '</strong>: quedan ' + left(S.season.faseFin));
   var sinResp = eqs.reduce(function (s2, e) { return s2 + (e.sinResponder || 0); }, 0);
   if (!ide && sinResp) lines.push('❓ Tus equipos tienen <strong>' + sinResp + '</strong> ' + (sinResp === 1 ? 'pregunta' : 'preguntas') + ' por responder');
   if (!ide) lines.push(p ? '⭐ <strong>' + p + '</strong> ' + (p === 1 ? 'idea espera' : 'ideas esperan') + ' tus estrellas' : '✅ Estás al día con las evaluaciones');
@@ -1646,6 +1674,21 @@ var ACT = {
   key: function (d) { pinKey(d.k); },
   pinGo: function () { pinSubmit(); },
   form: function (d) { if (isGuest()) return; openForm(d.mode, d.id); },
+  publishDraft: function (d, el) {
+    var b = findIdea(d.id);
+    if (b && !(PREGUNTAS[1].every(function (q, k) { return ((b.respuestas[1] || {})['q' + k] || '').trim().length >= 2; }))) { toast('Completa las ' + PREGUNTAS[1].length + ' preguntas antes de publicar', true); return openForm('edit', d.id); }
+    if (!confirm('¿Publicar "' + (b ? b.titulo : 'este borrador') + '" en el Gran Premio #' + S.season.ciclo + '?')) return;
+    joinAct('publishDraft', { ideaId: d.id }, el, '🚀 ¡Publicada! Entra a la evaluación de este Gran Premio.');
+  },
+  deleteDraft: function (d, el) { if (confirm('¿Borrar este borrador? No se puede recuperar.')) joinAct('deleteDraft', { ideaId: d.id }, el, '🗑️ Borrador eliminado'); },
+  relanzar: function (d, el) {
+    busy(el, true);
+    api('relanzar', { ideaId: d.id }).then(function (r) {
+      busy(el, false); if (!r.ok) return toast(r.error, true);
+      closeSheet(); toast(r.existente ? 'Ya tenías un relanzamiento en borradores' : '🔁 Creamos un borrador con tu idea. Mejórala con los consejos y publícala.');
+      after(r).then(function () { TAB = 'idear'; LS.set('tec_tab', TAB); render(); openForm('edit', r.ideaId); });
+    });
+  },
   submitForm: function (d, el) { submitForm(el); },
   idea: function (d) { openIdea(d.id); },
   star: function (d) { setStar(Number(d.c), Number(d.v)); },
