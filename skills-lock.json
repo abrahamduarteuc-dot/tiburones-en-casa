@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ecc-conventions": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/ecc-conventions/SKILL.md",
+      "computedHash": "8956e57535b039073475dcaedd775889f598b967954803ccdfe96082feddc24c"
+    }
+  }
+}
